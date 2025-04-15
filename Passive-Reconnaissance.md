@@ -130,3 +130,27 @@ user@TryHackMe$ dig tryhackme.com MX
 
 
 
+
+
+Purpose	Commandline                   |      Example
+--------------------------------------|-------------------------------------
+Lookup WHOIS record                   |  	whois tryhackme.com
+Lookup DNS A records            	    |  nslookup -type=A tryhackme.com
+Lookup DNS MX recordsat DNS server	  | nslookup -type=MX tryhackme.com 1.1.1.1
+Lookup DNS TXT records                |  	nslookup -type=TXT tryhackme.com
+Lookup DNS A records	                |   dig tryhackme.com A
+Lookup DNS MX records at DNS server	  | dig @1.1.1.1 tryhackme.com MX
+Lookup DNS TXT records	              |  dig tryhackme.com TXT
+
+
+
+-------
+
+DNS lookup tools, such as nslookup and dig, cannot find subdomains on their own. The domain you are inspecting might include a different subdomain that can reveal much information about the target. For instance, if tryhackme.com has the subdomains wiki.tryhackme.com and webmail.tryhackme.com, you want to learn more about these two as they can hold a trove of information about your target. There is a possibility that one of these subdomains has been set up and is not updated regularly. Lack of proper regular updates usually leads to vulnerable services. But how can we know that such subdomains exist?
+
+### [DNSDumpster.com](DNSDumpster.com)
+### [Shodan.io](DNSDumpster.com)
+
+
+
+
