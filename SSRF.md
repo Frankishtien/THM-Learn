@@ -49,7 +49,7 @@ http://hrms.thm?url=localhost/config
 
 ## Types of SSRF - Blind
 
- To
+ To be
 
 
 
