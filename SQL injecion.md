@@ -662,6 +662,13 @@ cursor.execute("SELECT * FROM users WHERE username = %s", (user_input,))
 ✅ خلاصة الكلام:
 
 
+الطريقة | الحماية من
+-------------|-----------------
+✅ Prepared Statements | SQLi تمامًا
+✅ Input Validation | تقليل المخاطر جدًا
+✅ Escaping User Input | حماية إضافية، بس مش كفاية لوحدها
+
+
 
 
 
