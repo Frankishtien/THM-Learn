@@ -288,7 +288,7 @@ Table: users
 <details>
    <summary>Vulnerable Startup: Vulnerable Notes</summary>
 
-   
+    
    
 </details>
 
