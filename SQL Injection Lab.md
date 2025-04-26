@@ -2,7 +2,7 @@
 
 <details>
    <summary>Introduction to SQL Injection: Part 2</summary>
-
+ 
    
 - ``try to put this in email``
 ```
