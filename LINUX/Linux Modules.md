@@ -627,6 +627,21 @@ sed '1,3s/john/JOHN/g' file.txt
 
 
 
+-------------------------
+
+
+> How would you substitute every 3rd occurrence of the word 'hack' to 'back' on every line inside the file file.txt?
+
+```
+sed 's/hack/back/3g' file.txt
+```
+
+> How will you do the same operation only on 3rd and 4th line in file.txt?
+
+```
+sed '3,4 s/hack/back/3g' file.txt
+```
+> 
 
    
 </details>
