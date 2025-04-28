@@ -1,5 +1,5 @@
 
-# 🐚 Bash Scripting Basics – Complete Guide 
+# 🐚 Bash Scripting Basics – Complete Guide  
 
 هذا الدليل يحتوي على جميع أساسيات البرمجة باستخدام Bash مع أمثلة عملية تشرح كل موضوع.
 
