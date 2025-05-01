@@ -453,7 +453,7 @@ $username = str_replace($special_chars, '', $username);
 </details>
 
 
-
+- > **``10.10.84.232/space/search_users.php?username=attacker``**
 
 
 
