@@ -214,7 +214,11 @@ Second-Order SQLi مثال قوي على أن الأمان لا يجب أن يع
 
 
 <details>
-  <summary>Introduction</summary>
+  <summary>Filter Evasion Techniques</summary>
+
+
+
+
 </details>
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
