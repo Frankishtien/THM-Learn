@@ -329,7 +329,7 @@ Table: users
 
 
 <details>
-     <summary>Vulnerable Startup: Change Password (i like it) 💯</summary>
+     <summary>Vulnerable Startup: Change Password (i like it) 💯 second-order SQLI</summary>
 
 - > create account using this name:
   >
