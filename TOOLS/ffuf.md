@@ -1,7 +1,7 @@
 # ffuf
 
 <details>
-  <summary>Basics 🟧</summary>
+  <summary>🟧 Basics </summary>
 
 ## FFUF (Fuzz Faster U Fool) Summary
 
@@ -112,7 +112,7 @@ favicon.ico
 
 
 <details>
-  <summary> Finding pages and directories 🟧</summary>
+  <summary>🟧 Finding pages and directories </summary>
 
 
 ## FFUF Advanced Enumeration Strategy
@@ -235,7 +235,143 @@ ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Disc
 
 
 
+<details>
+  <summary>🟧 Using filters </summary>
 
+
+## FFUF Filtering & Matching Techniques
+
+### Objective
+
+Reduce noise and increase visibility of relevant results by using ffuf's filter and matcher options.
+
+---
+
+### 🔹 Q1: Hide 403 Forbidden Responses
+
+By default, ffuf shows all matched responses. If you want to hide the ones with 403 status codes:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt -fc 403
+```
+
+📌 *Use this when many entries are inaccessible but still detected.*
+
+---
+
+### 🔹 Q2: Show Only 200 OK Responses
+
+To limit output only to valid and accessible content (HTTP 200):
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt -mc 200
+```
+
+🧠 *Shorter and cleaner than excluding multiple status codes like 403, 500, etc.*
+
+---
+
+### 🔹 Q3: Focus on HTTP 500 (Internal Server Errors)
+
+To detect bugs or unstable endpoints:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt -mc 500
+```
+
+🚨 *Useful for finding vulnerable endpoints or misconfigurations.*
+
+---
+
+### 🔹 Q4: Filter Zero-Length Responses
+
+Zero-size 200 responses often indicate uninteresting or stub files:
+
+```bash
+ffuf -u http://10.10.11.173/config/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt -fc 403 -fs 0
+```
+
+🔍 *Ideal when you want to ignore blank or default stub responses.*
+
+---
+
+### 🔹 Q5: Filter Dotfiles Using Regex
+
+Dotfiles (like `.htaccess`, `.php`) often trigger false positives. Use regex filter to exclude them:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt -fr '/\..*'
+```
+
+⚠️ *This avoids hiding all 403s and targets only dot-prefixed files.*
+
+---
+
+### 🔍 Common Matchers & Filters in ffuf
+
+#### Matcher Options:
+
+* `-mc` : Match HTTP status codes (e.g. `-mc 200`)
+* `-ms` : Match response size (bytes)
+* `-ml` : Match line count
+* `-mw` : Match word count
+* `-mr` : Match regex
+
+#### Filter Options:
+
+* `-fc` : Filter by HTTP status codes (e.g. `-fc 403,404`)
+* `-fs` : Filter by size (e.g. `-fs 0`)
+* `-fl` : Filter by number of lines
+* `-fw` : Filter by word count
+* `-fr` : Filter by regex (e.g. `-fr '/\.git'`)
+
+---
+
+### Summary Table
+
+| Use Case                   | Command Snippet |
+| -------------------------- | --------------- |
+| Hide 403s                  | `-fc 403`       |
+| Show only 200s             | `-mc 200`       |
+| Debug internal errors      | `-mc 500`       |
+| Ignore zero-size responses | `-fs 0`         |
+| Exclude dotfiles           | `-fr '/\..*'`   |
+
+---
+
+This advanced filtering gives more control over ffuf output, helps avoid noise, and lets you focus on what matters during enumeration.
+
+✅✅
+
+<details>
+
+```
+ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/raft-medium-files-lowercase.txt -fc 403
+```
+
+![image](https://github.com/user-attachments/assets/bdc4fbc9-fab2-490a-968c-5c59ece25bb8)
+
+
+```
+ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/raft-medium-files-lowercase.txt -mc 200
+```
+
+![image](https://github.com/user-attachments/assets/671d80b8-6248-43a8-91e4-c8f17cac8b12)
+
+```
+ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/raft-medium-files-lowercase.txt -fr '/\..*'
+```
+
+![image](https://github.com/user-attachments/assets/1d4bdc73-aa76-4b30-858d-4d3f5fcd4d43)
+
+
+  
+</details>
+
+
+
+  
+</details>
 
 
 
