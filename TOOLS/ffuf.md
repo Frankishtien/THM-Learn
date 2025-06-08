@@ -113,6 +113,122 @@ favicon.ico
 
 <details>
   <summary> Finding pages and directories 🟧</summary>
+
+
+## FFUF Advanced Enumeration Strategy
+
+### Objective
+
+Efficient fuzzing of files, extensions, and directories using curated SecLists.
+
+---
+
+### 🔹 Q1: Enumerate Common Files (Generic Wordlist)
+
+Use a general-purpose wordlist to find files:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files-lowercase.txt
+```
+
+📝 *Note: This list includes many extensions which may be irrelevant. So we refine in later steps.*
+
+---
+
+### 🔹 Q2: Discover File Extensions (e.g. index.php, index.asp)
+
+Enumerate using known extensions on the `index` filename:
+
+```bash
+ffuf -u http://10.10.11.173/indexFUZZ -w /usr/share/seclists/Discovery/Web-Content/web-extensions.txt
+```
+
+Sample from `web-extensions.txt`:
+
+```
+.asp
+.aspx
+.php
+.cgi
+.html
+```
+
+🎯 *Goal: Identify technologies in use (e.g., PHP, ASP.NET).*
+
+---
+
+### 🔹 Q3: Targeted File Fuzzing with Known Extensions
+
+Now that we know the likely extensions, apply them to generic filenames:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words-lowercase.txt -e .php,.txt
+```
+
+🧠 *Tip: Avoid 4-letter extensions like ****\`\`**** in this step if they're too noisy.*
+
+---
+
+### 🔹 Q4: Fuzz for Directories
+
+Directory discovery can be performed independently of file extensions:
+
+```bash
+ffuf -u http://10.10.11.173/FUZZ -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories-lowercase.txt
+```
+
+📁 *Useful for finding admin panels, API paths, and hidden folders.*
+
+---
+
+### Summary Table
+
+| Step | Purpose                         | Command (Summary)                                  |
+| ---- | ------------------------------- | -------------------------------------------------- |
+| Q1   | Find generic files              | `raft-medium-files-lowercase.txt`                  |
+| Q2   | Discover file extensions        | `indexFUZZ` with `web-extensions.txt`              |
+| Q3   | Apply known extensions to names | `raft-medium-words-lowercase.txt` + `-e .php,.txt` |
+| Q4   | Fuzz for directories            | `raft-medium-directories-lowercase.txt`            |
+
+---
+
+This strategy reduces noise and increases accuracy in file and directory discovery using ffuf.
+
+
+
+✅✅
+
+<details>
+
+
+![image](https://github.com/user-attachments/assets/12524185-336e-420f-9b4d-bee1af3927cd)
+
+
+```
+ffuf -u http://10.10.11.173/indexFUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/web-extensions.txt
+```
+
+![image](https://github.com/user-attachments/assets/db208fa9-f44b-450d-ba1a-ef14dc616fe4)
+
+```
+ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/raft-medium-words-lowercase.txt -e .php,.txt
+```
+
+![image](https://github.com/user-attachments/assets/bef31cdd-bc20-4a8c-8431-344a445f4bef)
+
+```
+ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/raft-medium-directories-lowercase.txt
+```
+
+![image](https://github.com/user-attachments/assets/c16e119a-a499-401d-a303-f66c87d9f07b)
+
+
+</details>
+
+
+
+
+  
 </details> 
 
 
