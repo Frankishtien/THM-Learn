@@ -424,6 +424,38 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>SUID / SGID Executables</summary>
+
+* <details>
+     <summary>Known Exploits</summary>
+  </details>
+
+
+* <details>
+     <summary>Shared Object Injection</summary>
+  </details>
+
+
+* <details>
+     <summary>Environment Variables</summary>
+  </details>
+
+
+* <details>
+     <summary>Abusing Shell Features (#1)</summary>
+  </details>
+
+
+* <details>
+     <summary>Abusing Shell Features (#2)</summary>
+  </details>
+
+
+
+  
+</details>
+
 
 
 
