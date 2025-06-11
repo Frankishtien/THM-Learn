@@ -502,6 +502,90 @@ ffuf -u http://10.10.39.214/sqli-labs/Less-11/ -c -w /home/kali/Downloads/wordli
 
 
 
+<details>
+  <summary>🟧 Finding vhosts and subdomains</summary>
+
+## FFUF Subdomain and VHost Enumeration
+
+### 🎯 Goal
+
+Use `ffuf` to discover subdomains and internal virtual hosts (vhosts) that could reveal hidden services or sensitive content.
+
+---
+
+### 🔹 Subdomain Enumeration (DNS-based)
+
+`ffuf` can be used to brute-force subdomains even though it's not as optimized as specialized tools like `subfinder` or `dnsx`:
+
+```bash
+ffuf -u http://FUZZ.mydomain.com -c \
+     -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+```
+
+📌 *Replaces **`FUZZ`** with each word in the list to try **`sub1.mydomain.com`**, **`admin.mydomain.com`**, etc.*
+
+⚠️ *Some subdomains may not be publicly resolvable due to DNS settings or internal-only names.*
+
+---
+
+### 🔹 VHost Enumeration (Host header-based)
+
+To bypass DNS resolution and directly test for virtual hosts (especially internal ones), use the `Host` header:
+
+```bash
+ffuf -u http://mydomain.com -c \
+     -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
+     -H 'Host: FUZZ.mydomain.com' -fs 0
+```
+
+🧠 *Here, requests go to **`mydomain.com`**, but the **`Host`** header tells the web server to handle the request as if it’s going to **`FUZZ.mydomain.com`**.*
+
+---
+
+### 🔁 Compare Both Methods
+
+You can compare:
+
+1. **Direct subdomain scan** (DNS resolution):
+
+```bash
+ffuf -u http://FUZZ.mydomain.com -c -w wordlist.txt -fs 0
+```
+
+2. **Virtual host scan** (Host header override):
+
+```bash
+ffuf -u http://mydomain.com -c -w wordlist.txt -H 'Host: FUZZ.mydomain.com' -fs 0
+```
+
+It’s possible that:
+
+* 🔒 DNS-based scan **misses** internal subdomains.
+* 🔓 Host-header-based scan **reveals** internal services.
+
+---
+
+### 🧠 Tip
+
+* Apache calls them *Virtual Hosts*
+* Nginx calls them *Server Blocks*
+
+They both serve the same purpose: allowing multiple sites to be served from the same IP address.
+
+---
+
+### ✅ Summary
+
+| Technique      | Description                              | Command Style                |
+| -------------- | ---------------------------------------- | ---------------------------- |
+| Subdomain scan | Tests `FUZZ.domain.com` via DNS          | `-u http://FUZZ.domain.com`  |
+| VHost scan     | Bypasses DNS using Host header injection | `-H 'Host: FUZZ.domain.com'` |
+
+Use both approaches together to get a fuller picture of your target’s attack surface.
+
+  
+</details>
+
 
 
 
