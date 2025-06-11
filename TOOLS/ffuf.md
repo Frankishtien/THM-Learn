@@ -451,6 +451,17 @@ ffuf -u http://10.10.39.214/sqli-labs/Less-11/ \
 Mastering parameter and value fuzzing with ffuf can uncover serious vulnerabilities like SQLi, XSS, file inclusion, and insecure auth logic.
 
 
+
+الخيـار -c في أداة ffuf معناه:
+
+✅ Colorize output (تلوين النتائج في التيرمنال)
+يعني ببساطة يخلي النتائج تظهر بألوان عشان تسهل عليك تمييز:
+
+الـStatus codes (200, 302, 403...) كل واحدة بلون مختلف.
+
+
+
+
 ✅
 
 <details>
