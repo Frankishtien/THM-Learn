@@ -1,5 +1,9 @@
 # ffuf
 
+
+
+
+
 <details>
   <summary>🟧 Basics </summary>
 
