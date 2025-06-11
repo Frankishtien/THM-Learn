@@ -590,6 +590,67 @@ Use both approaches together to get a fuller picture of your target’s attack s
 
 
 
+<details>
+  <summary>🟧 Proxifying ffuf traffic</summary>
+
+## FFUF with Proxy Support
+
+### 🎯 Goal
+
+Use proxies with `ffuf` to route traffic for inspection, plugin use, or advanced testing setups like network pivoting.
+
+---
+
+### 🔹 Sending FFUF Traffic Through a Proxy
+
+You can direct all FFUF requests through an HTTP or SOCKS5 proxy, such as Burp Suite’s proxy listener:
+
+```bash
+ffuf -u http://10.10.39.214/FUZZ -c \
+     -w /usr/share/seclists/Discovery/Web-Content/common.txt \
+     -x http://127.0.0.1:8080
+```
+
+📌 `-x` sets the proxy address.
+
+* `http://127.0.0.1:8080` is the default for Burp Suite.
+* Works with HTTP and SOCKS proxies.
+
+---
+
+### 🔹 Replaying Only Matching Requests
+
+You can send only the requests that returned valid responses (i.e. matched) to your proxy for further analysis:
+
+```bash
+ffuf -u http://10.10.39.214/FUZZ -c \
+     -w /usr/share/seclists/Discovery/Web-Content/common.txt \
+     -replay-proxy http://127.0.0.1:8080
+```
+
+🔍 This is useful when:
+
+* You only want to replay **valid results** through Burp.
+* You want to **reduce noise** and avoid flooding your proxy history.
+* You're focusing on analyzing **interesting findings** only.
+
+---
+
+### ✅ Summary
+
+| Option          | Description                            |
+| --------------- | -------------------------------------- |
+| `-x`            | Send **all** requests through proxy    |
+| `-replay-proxy` | Send **only matched** results to proxy |
+
+Using proxies with FFUF enhances control, visibility, and integration with manual testing tools like BurpSuite.
+
+🧠 Combine this with filters (`-fs`, `-fc`, etc.) to fine-tune what gets sent or replayed!
+
+
+  
+</details>
+
 
 
 
