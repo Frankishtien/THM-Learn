@@ -376,6 +376,124 @@ ffuf -u http://10.10.11.173/FUZZ -w /home/kali/Downloads/wordlists/SecLists/Disc
 
 
 
+<details>
+  <summary>🟧 Fuzzing parameters</summary>
+
+## FFUF Parameter Fuzzing Techniques
+
+### Objective
+
+Discover hidden or undocumented parameters, fuzz their values, and brute-force credentials using ffuf.
+
+---
+
+### 🔹 Q1: Discover Hidden GET Parameters
+
+If you find a URL but don’t know what parameters it accepts, fuzz for them:
+
+```bash
+ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?FUZZ=1' \
+     -c -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -fw 39
+
+ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?FUZZ=1' \
+     -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-words-lowercase.txt -fw 39
+```
+
+📌 *`-fw 39`*\* filters responses that contain exactly 39 words — common for error or default pages.\*
+
+---
+
+### 🔹 Q2: Fuzz Parameter Values (0–255)
+
+Once a parameter (e.g., `id`) is found, test its behavior with integer values:
+
+```bash
+ruby -e '(0..255).each{|i| puts i}' | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+
+ruby -e 'puts (0..255).to_a' | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+
+for i in {0..255}; do echo $i; done | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+
+seq 0 255 | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+
+cook '[0-255]' | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+```
+
+🧠 *This helps spot valid IDs, error messages, or potential SQLi behavior.*
+
+---
+
+### 🔹 Q3: Brute-Force Passwords via POST Request
+
+Test password values with ffuf in a login form:
+
+```bash
+ffuf -u http://10.10.39.214/sqli-labs/Less-11/ \
+     -c -w /usr/share/seclists/Passwords/Leaked-Databases/hak5.txt \
+     -X POST -d 'uname=Dummy&passwd=FUZZ&submit=Submit' \
+     -fs 1435 -H 'Content-Type: application/x-www-form-urlencoded'
+```
+
+📌 *Use **\`\`** when fuzzing POST.*
+
+---
+
+### Summary Table
+
+| Use Case                   | Command Highlights                |
+| -------------------------- | --------------------------------- |
+| Fuzz hidden GET parameters | `?FUZZ=1` with wordlist           |
+| Fuzz parameter values      | `id=FUZZ` with generated numbers  |
+| Brute-force password field | `passwd=FUZZ` in POST with -fs/-H |
+
+---
+
+Mastering parameter and value fuzzing with ffuf can uncover serious vulnerabilities like SQLi, XSS, file inclusion, and insecure auth logic.
+
+
+✅
+
+<details>
+
+```
+ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?FUZZ=1' -c -w /home/kali/Downloads/wordlists/SecLists/Discovery/Web-Content/burp-parameter-names.txt -fw 39
+```
+
+![image](https://github.com/user-attachments/assets/1d80d4a4-d67b-4915-953f-12885e191424)
+
+----
+
+```
+for i in {0..255}; do echo $i; done | ffuf -u 'http://10.10.39.214/sqli-labs/Less-1/?id=FUZZ' -c -w - -fw 33
+```
+
+
+![image](https://github.com/user-attachments/assets/fefd7d35-389b-491e-b4da-4683170adf6a)
+
+---
+
+
+```
+ffuf -u http://10.10.39.214/sqli-labs/Less-11/ -c -w /home/kali/Downloads/wordlists/SecLists/Passwords/Leaked-Databases/hak5.txt -X POST -d 'uname=Dummy&passwd=FUZZ&submit=Submit' -fs 1435 -H 'Content-Type: application/x-www-form-urlencoded'
+```
+
+![image](https://github.com/user-attachments/assets/06a19736-d9fe-4896-81aa-09fc8ecedff3)
+
+
+  
+</details>
+
+
+
+  
+</details>
+
+
+
+
+
+
+
 
 
 
