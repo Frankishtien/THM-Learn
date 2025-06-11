@@ -145,8 +145,8 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
    * (لو الملف ده ينفع تكتب فيه هتمسح الباسورد بتاع ال root user أو admin user وتحط مكانه باسورد من عندك)
 
-   * `mkpasswd -m sha-512 newpassword`
-    * (عشان تعمل باسورد لازم ده)
+   * `mkpasswd -m sha-512 newpassword`    (ممكن تعمل باسورد بالامر ده)
+      
 
    * `su root`
     * (ادخل الباسورد الجديد)
