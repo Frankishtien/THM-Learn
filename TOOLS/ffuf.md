@@ -654,7 +654,99 @@ Using proxies with FFUF enhances control, visibility, and integration with manua
 
 
 
+<details>
+  <summary>🟪 Reviewing the options</summary>
 
+
+
+## FFUF Tips: Ignore Comments & Explore More Options
+
+### 🧠 Goal
+
+Enhance `ffuf` efficiency by skipping useless lines in wordlists and discovering powerful command-line options.
+
+---
+
+### 🔹 Ignore Comments in Wordlists with `-ic`
+
+Many wordlists include comment lines (starting with `#`) or license information that are irrelevant to fuzzing.
+
+**Example: View the first lines of a wordlist:**
+
+```bash
+head /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt
+```
+
+Output:
+
+```
+# directory-list-2.3-medium.txt
+# Copyright 2007 James Fisher
+# Licensed under Creative Commons...
+# ...
+```
+
+Instead of wasting time sending requests with these comment lines, use `-ic` to **ignore comments**:
+
+```bash
+ffuf -u http://10.10.39.214/FUZZ -c \
+     -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt \
+     -ic -fs 0
+```
+
+📌 `-ic` automatically skips any line starting with `#`.
+
+This makes scans:
+
+* Cleaner
+* Slightly faster
+* More accurate
+
+---
+
+### 🔍 Discovering More FFUF Options
+
+FFUF is full of useful features not yet covered, such as:
+
+* Delay options (`-p`, `-rate`)
+* Recursive fuzzing (`-recursion`)
+* Match status code (`-mc`), word count (`-mw`), regex, and more
+* Output to JSON, CSV, HTML, etc.
+
+To explore all available options:
+
+```bash
+ffuf -h
+```
+
+This will list:
+
+* All filters & matchers
+* Advanced usage (headers, cookies, multiple fuzz points)
+* Output formatting
+
+---
+
+### ✅ Summary
+
+| Option | Description                                      |
+| ------ | ------------------------------------------------ |
+| `-ic`  | Ignore lines in the wordlist that start with `#` |
+| `-h`   | Show help menu and discover more useful features |
+
+Using these helps you:
+
+* Clean up your scans
+* Discover more attack surfaces
+* Tailor your fuzzing based on context
+
+💡 Mastering the small details like `-ic` and constantly checking `ffuf -h` helps turn you from a script-runner into a fuzzing expert!
+
+
+
+
+  
+</details>
 
 
 
