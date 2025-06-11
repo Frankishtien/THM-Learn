@@ -398,6 +398,23 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
    * `whoami` or `id`
        * `root`
+
+
+
+   > ### لماذا ``tar`` كان قابل للاستغلال ؟
+   >
+   > لان ``tar`` يرى ملفات تحمل اسماء مشابهه لخيارات سطر الاوامر ``--checkpoint=1`` يعتبرها كانها
+   > خيارات فعليه او اوامر وليست مجرد اسماء ملفات
+   >
+   > ### هل يمكن تنفيذ نفس الاستغلال على برامج اخرى ؟
+   >
+   > نعم مثل :
+   >
+   > rsync , find , cp , mv , gzip , sort , grep , awk
+   >
+   > ستجد استغلالهم على gtfobins.io 
+
+
      
 </details>
   
