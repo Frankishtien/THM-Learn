@@ -429,6 +429,28 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Known Exploits</summary>
+
+   # SUID/SGID Executables - Known Exploits
+
+   ### 8) SUID/SGID Executables - known exploits
+
+   * استغلال البرامج التي تعمل بصلاحيات SUID أو SGID للحصول على صلاحيات الـ `root`.
+
+   * `find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null`
+       * البحث عن ملفات تحمل صلاحيات SUID أو SGID.
+       * Example found: `/usr/sbin/exim-4.84-3`
+
+   * search on ``exploitDB`` about **_exim-4.84-3_**
+       * on this room Found exploit code at: `/home/user/tools/suid/exim/cve.sh`
+       * (هنا في كود الاستغلال اللي وجدناه لبرنامج exim)
+
+   * `chmod +x /home/user/tools/suid/exim/cve.sh`
+
+   * `whoami`
+       * `root`
+       * (مبروك)
+
+
   </details>
 
 
