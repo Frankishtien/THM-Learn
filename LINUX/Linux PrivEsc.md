@@ -615,7 +615,40 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>Passwords & Keys</summary>
 
+
+* <details>
+     <summary>History Files</summary>
+
+   # Passwords & Key - History Files
+
+   ### 13) Passwords & key - history files
+
+   * ممكن يكون المستخدم قد كتب الباسورد بالخطأ وسط أوامر بدلاً من نافذة إدخال كلمة السر.
+
+   * Check the user's history file for credentials:
+       ```bash
+       cat ~/.history | less
+       ```
+
+   * Example of a password found in the history:
+       ```bash
+       mysql -h somehost.local -u root -pPassword123
+       ```
+
+  </details>
+
+* <details>
+     <summary>Config Files</summary>
+  </details>
+
+* <details>
+     <summary>SSH Keyss</summary>
+  </details>
+  
+</details>
 
 
 
