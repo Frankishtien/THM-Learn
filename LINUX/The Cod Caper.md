@@ -226,6 +226,19 @@ nc -lvnp 4444
 
 ![image](https://github.com/user-attachments/assets/51333772-af4e-41db-b561-9454386a80d4)
 
+---
+
+```
+find / 2>>/dev/null | grep -i shadow
+```
+
+
+![image](https://github.com/user-attachments/assets/567b9ed5-4647-4b76-874a-76da2f133727)
+
+
+
+
+
 
 
   
