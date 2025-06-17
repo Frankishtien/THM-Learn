@@ -775,7 +775,66 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>Kernel Exploits</summary>
 
+
+# Kernel Exploits - Dirty Cow
+
+(Copy-on-write)
+
+### 17) Kernal Exploits - (Dirty Cow)
+
+* اختراق النظام عن طريق استغلال ل ثغره فى ``kernal`` وتحديدا ثغره ``dirty cow`` اللى هى ثغره تصعيد صلاحيات فى ``linux``
+
+* Find potential exploits:
+    ```bash
+    perl /home/user/tools/kernel-exploits/linux-exploit-suggester-2/linux-exploit-suggester-2.pl
+    ```
+ 
+   * ده اسكربت مكتوب بلغه ``perl`` بيفحص النظام ويعرض قائمه بالثغرات الموجوده فى ال ``kernal`` بحيث تختار واحده منها وتستغلها
+
+* **Exploit Details:**
+    * **Vulnerability:** Dirty Cow
+    * **CVE:** CVE-2016-5195
+    * **Source:** `http://exploit-db.com/exploits/45697`
+
+* **The exploit code**
+    * ``/home/user/tools/kernel-exploits/dirtycow/c0w.c``
+       * ده كود بيستغل هذه الثغره موجود عندنا على الماشيين بس فى الحياه الواقعيه هتكتبه او تجيبه جاهز
+       * المهم ``cow`` هو ميكانزم او اليه بيستخدمها ال ``kernal`` لحمايه البيانات فى الذاكره
+       * الكود ده بيستبدل ``/usr/bin/passwd`` المسؤول عن تغيير كلمات المرور بملف ``shell`` يمنح صلاحيات ``root`` و بيعمل نسخه احتياطيه ل ``/usr/bin/passwd``
+       * فى ``/tm/bak`` عشان يرجعله بعد الاستغلال
+         
+
+* **Compile the exploit:**
+    * `gcc -pthread /tools/kernal-exploit/DirtyCow/cow.c -o cow`
+       * تحويل الكود لملف تنفيذى لاستخدامه لتنفيذ الثغره 
+    
+
+* **Run the exploit:**
+    ```bash
+    ./cow
+    ```
+
+    * تشغيل الملف.
+    * الان قام باستبدال ``/usr/bin/passwd`` بملف ``shell``
+
+* **Trigger the payload:**
+    ```bash
+    /usr/bin/passwd
+    ```
+    * (تشغيل الملف الآن بعدما استبدل `shell` بملف `/usr/bin/passwd`)
+
+* **Check your identity:**
+    ```bash
+    whoami
+    ```
+    * `root`
+    * (مبروك)
+
+  
+</details>
 
 
 
