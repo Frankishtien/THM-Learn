@@ -839,10 +839,15 @@ Used responsibly, this is a great example of **local privilege escalation** via 
 
 
 
+---
+
+> [!important]
+> ### privesc-scripts
 
 
-
-
+* Linpeas.sh
+* LinEnum.sh
+* Lse.sh
 
 
 
