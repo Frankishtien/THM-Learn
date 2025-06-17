@@ -758,6 +758,16 @@ Used responsibly, this is a great example of **local privilege escalation** via 
     * (مبروك)
 
 
+
+> ## ما هو NFS (Network File System) ؟
+>
+- >  هو بروتوكول يسمح بمشاركه الملفات بين الاجهزه على الشبكه
+- > يسمح يسمح للمستخدمسن بتركيب ``(mount)`` مجلدات من جهاز الى اخر كما لو كانت عليه
+
+  # ``المشكله`` 
+- > ال ``(root shquashing)`` هى ميزه امان فى ``NFS`` تمنح المستخدم ``ROOT`` على جهاز العميل من ان يكون ``ROOT`` على الخادم
+- > عندما تكون هذه الميزه معطله  ``(no_root_squashing)`` فان ``ROOT`` على جهاز العميل يصبح ``ROOT`` على جهاز الخادم مما يسمح بعمل ``PRIVESC``
+ 
   
 </details>
 
