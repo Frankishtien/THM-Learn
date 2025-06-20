@@ -959,7 +959,7 @@ gpg --output decrypted_message.txt --decrypt message.gpg.1
 ## 📚 لمزيد من التوسع والمعلومات
 https://doi.org/10.6028/NIST.IR.8105  (was in tryhackme)
 
-#### gpt resourses:
+#### ``gpt resourses``:
 
 -   **[مستندات NIST حول Post-Quantum Cryptography](https://csrc.nist.gov/projects/post-quantum-cryptography):** المصدر الرسمي لمتابعة جهود توحيد معايير التشفير المقاومة للكوانتوم.
 -   **كتاب [Cryptography Apocalypse](https://www.amazon.com/Cryptography-Apocalypse-Preparing-Quantum-Computing/dp/1484242189):** يشرح بالتفصيل تأثير الحوسبة الكمومية على الأمن السيبراني وكيف يمكن للأفراد والمؤسسات الاستعداد لهذا المستقبل.
