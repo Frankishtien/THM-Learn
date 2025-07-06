@@ -1,5 +1,7 @@
 # Linux PrivEsc
 
+![image](https://github.com/user-attachments/assets/b1fe0a80-97d4-4951-9e6b-885165fc33a5)
+
 [tryhackme_Linux PrivEsc](https://tryhackme.com/room/linuxprivesc?ref=blog.tryhackme.com)
 
 
