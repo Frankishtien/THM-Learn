@@ -22,6 +22,9 @@
 > smbclient //MACHINE_IP/C$ -U user
 > ```
 
+
+
+
 - <details>
      <summary>Nmap Scan</summary>
 
