@@ -1835,6 +1835,33 @@ nc -lnvp 4444
 
 - <details>
       <summary>Rogue Potato</summary>
+
+
+## 1. Run socat redirector on Kali
+
+
+```ruby
+sudo socat tcp-listen:135,reuseaddr,fork tcp:MACHINE_IP:9999
+```
+
+- **`socat`** : A program that allows us to create a redirect or proxy for communication between two sockets (TCP/UDP).
+- **`tcp-listen:135`** : Listen on port 135 in Kali.
+   - `135` : is the RPC Endpoint Mapper port that Windows uses.
+- **`reuseaddr`** : It allows port reuse even if sessions are open.
+- **`fork`** : A fork is used for each new connection (meaning it can serve more than one connection).
+- **`tcp:MACHINE_IP:9999`** : Any connection that comes to Kali:135, send it to the Windows victim on port 9999.
+
+
+
+
+
+
+> ---
+> ### 📌 _Goal → We make a redirect to port 135 used by the exploit (RoguePotato), so that instead of going to Windows itself, it goes to Kali and from there we return it again._
+> ---
+
+
+
   </details>
 
 
