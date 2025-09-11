@@ -1,4 +1,4 @@
-<img width="1525" height="796" alt="image" src="https://github.com/user-attachments/assets/6e78a49c-7d27-4e2e-89bf-0a3c44b18b4d" /># Windows PrivEsc
+# Windows PrivEsc
 
 <img width="1907" height="364" alt="image" src="https://github.com/user-attachments/assets/82f1df6e-1dca-4555-bfea-af1faf6f0869" />
 
