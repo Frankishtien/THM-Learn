@@ -2066,6 +2066,49 @@ nc -lnvp 4444
 
 <details>
   <summary>Privilege Escalation Scripts</summary>
+
+
+<details>
+     <summary>winPEASany.exe</summary>
+
+
+## 1. winPEASany.exe 
+
+```ruby
+winPEASany.exe
+```
+
+<img width="1235" height="384" alt="image" src="https://github.com/user-attachments/assets/ec8b4be1-dafe-4510-82f1-cd4835325a82" />
+
+<img width="1207" height="592" alt="image" src="https://github.com/user-attachments/assets/dde4b41d-a269-486c-92a1-ecba7d073eee" />
+
+<img width="1229" height="495" alt="image" src="https://github.com/user-attachments/assets/1271fc27-03bf-491b-a238-b2041a554a8f" />
+
+<img width="1165" height="433" alt="image" src="https://github.com/user-attachments/assets/d5fd3329-f7f1-454a-82f2-211a16ad6383" />
+
+<img width="1345" height="281" alt="image" src="https://github.com/user-attachments/assets/018ac017-00eb-471e-8fe7-dd90e93054da" />
+
+<img width="1261" height="257" alt="image" src="https://github.com/user-attachments/assets/5d3af489-f7f1-46e0-b882-dc1ee0b2efdc" />
+
+
+     
+</details>
+
+
+<details>
+     <summary>Seatbelt.exe</summary>
+</details>
+
+<details>
+     <summary>PowerUp.ps1</summary>
+</details>
+
+<details>
+     <summary>SharpUp.exe</summary>
+</details>
+
+
+     
 </details>
 
 
