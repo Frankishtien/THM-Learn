@@ -5,13 +5,13 @@
 ---
 
 >[!important]
-> ## Let's first connect to the machine.  RDP is open on port 3389.  Your credentials are:
-> ### **`username`** : user
-> ### **`password`** : password321
+> ### Let's first connect to the machine.  RDP is open on port 3389.  Your credentials are:
+> #### **`username`** : user
+> #### **`password`** : password321
 >
-> ## `For any administrative actions you might take, your credentials are:`
-> ### **`username`** : TCM
-> ### **`password`** : Hacker123
+> ### `For any administrative actions you might take, your credentials are:`
+> #### **`username`** : TCM
+> #### **`password`** : Hacker123
 >
 
 
