@@ -14,6 +14,18 @@
 > #### **`password`** : Hacker123
 >
 
+---
+
+>[!warning]
+> ### Connect To Target
+> ```ruby
+> xfreerdp3 /u:user /p:password321 /cert:ignore /v:10.10.103.25
+> ```
+> **`Or`**
+>
+>```ruby
+> rdesktop 10.10.103.25 -u user -p password321
+>```
 
 ---
 
