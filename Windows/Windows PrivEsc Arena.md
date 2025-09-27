@@ -6,12 +6,95 @@
 
 <details>
   <summary>Registry Escalation</summary>
+
+
+
+
+
+- <details>
+      <summary>Autorun</summary>
+  </details>
+
+- <details>
+      <summary>AlwaysInstallElevated</summary>
+  </details>
+
+
+
+
+
+  
 </details>
+
+
+
+
+
+
+
+
+
+
+
 
 
 <details>
   <summary>Service Escalation</summary>
+
+
+
+
+
+
+- <details>
+      <summary>Registry</summary>
+  </details>
+
+
+- <details>
+      <summary>Executable Files</summary>
+  </details>
+
+
+- <details>
+      <summary> DLL Hijacking</summary>
+  </details>
+
+
+- <details>
+      <summary>binPath</summary>
+  </details>
+
+
+- <details>
+      <summary>Unquoted Service Paths</summary>
+  </details>
+  
+  
+  
+  
+
+
+
+
+
+
+  
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 <details>
@@ -24,8 +107,34 @@
 </details>
 
 
+
+
+
+
+
+
 <details>
   <summary>Password Mining Escalation</summary>
+
+
+
+
+
+- <details>
+      <summary> Configuration Files</summary>
+  </details>
+
+
+
+- <details>
+      <summary>Memory</summary>
+  </details>
+
+
+
+
+
+  
 </details>
 
 
