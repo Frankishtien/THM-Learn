@@ -1345,12 +1345,137 @@ Return to your Metasploit terminal on the Kali VM. The payload will connect back
 
 - <details>
       <summary> Configuration Files</summary>
+
+
+
+
+
+  
+  
+  
+  
+  
+  Windows Privilege Escalation: Password Mining from Configuration Files
+  ======================================================================
+  
+  This guide demonstrates a privilege escalation technique by finding credentials stored in configuration files left over from the Windows installation process. During an unattended setup, files like `Unattend.xml` are used to automate installation, and they can contain sensitive data, including a Base64-encoded administrator password.
+  
+  📂 The Vulnerability: Unattend Files
+  ------------------------------------
+  
+  The `Unattend.xml` file allows administrators to configure and automate a wide-scale Windows deployment. If this file is not properly cleaned up after installation, it can leave a local administrator's password on the system. While the password is often encoded in Base64, this is not a form of encryption and can be easily reversed to reveal the plaintext password.
+  
+  💥 Exploitation
+  ---------------
+  
+  The exploitation process involves finding the `Unattend.xml` file, extracting the encoded password, and decoding it.
+  
+  ### 1\. Finding the Password (Windows VM)
+  
+  1.  Locate and Read the Unattend.xml File
+  
+      These files are often found in C:\Windows\Panther\. Open a command prompt on the Windows VM and use the type command to display its contents.
+  
+      
+  
+      ```ruby
+      type C:\Windows\Panther\Unattend.xml
+  
+      ```
+  
+  2.  Extract the Encoded String
+  
+      Look through the XML output for the <Password> section. Inside, you will find a <Value> tag containing a Base64 string.
+  
+      
+  
+      ```xml
+      <UserAccounts>
+          <AdministratorPassword>
+              <Value>QWRtaW5QYXNzd29yZDEyMyE=</Value>
+              <PlainText>false</PlainText>
+          </AdministratorPassword>
+      </UserAccounts>
+  
+      ```
+  
+      Copy the Base64 string from between the `<Value>` tags (in the example above: `QWRtaW5QYXNzd29yZDEyMyE=`).
+  
+  ### 2\. Decoding the Password (Kali VM)
+  
+  1.  Decode the Base64 String
+  
+      On your Kali machine, use the echo and base64 -d commands to decode the string you copied.
+  
+      
+  
+      ```Bash
+      echo <COPIED_BASE64_STRING> | base64 -d
+  
+      ```
+  
+  2.  Reveal the Plaintext Password
+  
+      The output will be the plaintext administrator password.
+  
+      
+  
+      ```Bash
+      # Example using the string from above
+      echo QWRtaW5QYXNzd29yZDEyMyE= | base64 -d
+      AdminPassword123!
+  
+      ```
+  
+  ✅ Gaining Access
+  ----------------
+  
+  Now that you have the administrator's password, you can use it to escalate your privileges.
+  
+  1.  Switch to the Administrator Account
+  
+      On the Windows VM, you can now use these credentials with commands like runas to execute commands as the administrator or simply log out and log back in as the administrator.
+  
+      DOS
+  
+      ```
+      runas /user:Administrator cmd.exe
+  
+      ```
+  
+      Enter the decoded password when prompted, and you will be granted a new command prompt with administrative privileges.
+  
+      <img width="640" height="154" alt="image" src="https://github.com/user-attachments/assets/1d27a0df-de9a-4831-9e45-dd6e09805369" />
+
+  
+      ```xml
+       <AutoLogon>
+                <Password>
+                    <Value>cGFzc3dvcmQxMjM=</Value>
+                    <PlainText>false</PlainText>
+                </Password>
+                <Enabled>true</Enabled>
+                <Username>Admin</Username>
+            </AutoLogon>
+      ```
+
+
+
+
   </details>
 
 
 
 - <details>
       <summary>Memory</summary>
+
+
+
+
+
+
+
+
   </details>
 
 
