@@ -1473,6 +1473,144 @@ Return to your Metasploit terminal on the Kali VM. The payload will connect back
 
 
 
+  
+  
+  Windows Privilege Escalation: Password Mining from Process Memory
+  =================================================================
+  
+  This guide demonstrates a technique for extracting credentials from the memory of a running process. When applications handle authentication, credentials may temporarily reside in the process's memory in plaintext or a weakly encoded format (like Base64). By creating a memory dump of a process after it has authenticated, an attacker with local access can search the dump file to recover those credentials.
+  
+  ⚙️ The Setup
+  ------------
+  
+  This attack requires two parts: setting up a fake server to prompt for credentials and then having the user on the target machine authenticate to it.
+  
+  ### 1\. Setting Up a Fake Authentication Server (Kali VM)
+  
+  We will use a Metasploit auxiliary module to quickly create a web server that requests HTTP Basic Authentication.
+  
+  1.  **Start Metasploit**
+  
+      Bash
+  
+      ```
+      msfconsole
+  
+      ```
+  
+  2.  Configure the HTTP Basic Auth Capture Server
+  
+      This module will listen for connections and record any credentials it receives.
+  
+      Ruby
+  
+      ```
+      msf6 > use auxiliary/server/capture/http_basic
+      msf6 auxiliary(server/capture/http_basic) > set uripath /x
+      msf6 auxiliary(server/capture/http_basic) > run
+  
+      ```
+  
+      Metasploit is now listening for incoming connections.
+  
+  ### 2\. Triggering Authentication (Windows VM)
+  
+  1.  On the Windows VM, open Internet Explorer and browse to the server you just set up.
+  
+      ```
+      http://<Your Kali VM IP Address>/x
+  
+      ```
+  
+  <img width="1821" height="675" alt="image" src="https://github.com/user-attachments/assets/4718474d-6acd-4df6-8664-67aeecbdb206" />
+  
+  
+  2.  Internet Explorer will display an authentication prompt. Enter any username and password (e.g., `user` / `password123`) and click OK. These credentials will now be stored temporarily in the `iexplore.exe` process memory.
+  
+  💥 Exploitation: Memory Analysis
+  --------------------------------
+  
+  Now that the credentials are in memory, we will create a dump of the browser process and analyze it on our Kali machine.
+  
+  ### 1\. Creating the Memory Dump (Windows VM)
+  
+  1.  Open Task Manager
+  
+      On the Windows VM, right-click the taskbar and select Task Manager, or press Ctrl+Shift+Esc.
+  
+  2.  **Create the Dump File**
+  
+      -   Go to the **Details** tab.
+  
+      -   Find and right-click on the **`iexplore.exe`** process.
+  
+      -   Select **Create dump file** from the context menu.
+  
+      -   Note the location where the `iexplore.DMP` file is saved.
+  
+  
+  
+  
+  
+  3.  Transfer the Dump File
+  
+      Copy the generated iexplore.DMP file from the Windows VM to your Kali machine (e.g., to the Desktop).
+  
+  
+  
+  
+  
+  
+  ### 2\. Finding and Decoding the Credentials (Kali VM)
+  
+  1.  Search the Dump for Authentication Headers
+  
+      On your Kali machine, open a terminal. Use the strings command to find human-readable text in the dump file and grep to filter for the HTTP Basic Authentication header.
+  
+      Bash
+  
+      ```
+      strings ~/Desktop/iexplore.DMP | grep "Authorization: Basic"
+  
+      ```
+  
+      The output will be the full header, including a Base64 encoded string. For example:
+  
+      ```
+      Authorization: Basic dXNlcjpwYXNzd29yZDEyMw==
+  
+      ```
+  
+  2.  Decode the Base64 String
+  
+      Copy only the Base64 string from the previous output. Use echo and base64 -d to decode it.
+  
+      Bash
+  
+      ```
+      echo -ne 'dXNlcjpwYXNzd29yZDEyMw==' | base64 -d
+  
+      ```
+  
+  3.  Reveal the Credentials
+  
+      The output will be the plaintext credentials that were entered into the browser.
+  
+      ```
+      user:password123
+  
+      ```
+  
+      This confirms the successful extraction of credentials from the process memory dump.
+  
+  
+  
+  
+  
+  
+  
+
+
 
 
 
