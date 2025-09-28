@@ -831,6 +831,93 @@
 
 - <details>
       <summary>binPath</summary>
+
+
+
+
+
+
+  
+  
+  Windows Privilege Escalation: Insecure Service Permissions (binPath)
+  ====================================================================
+  
+  This guide demonstrates a privilege escalation technique by exploiting a Windows service where a low-privileged user has permissions to modify its configuration. If a user has the `SERVICE_CHANGE_CONFIG` permission, they can alter the service's binary path (`binPath`) to execute an arbitrary command with the privileges of the service account, which is often `NT AUTHORITY\SYSTEM`.
+  
+  🕵️‍♂️ Detection
+  ----------------
+  
+  First, we need to identify a service that our user has permission to reconfigure.
+  
+  1.  Check Service Permissions
+  
+      Open a command prompt on the Windows VM and use accesschk64.exe to inspect the permissions for the target service (daclsvc).
+  
+      
+  
+      ```ruby
+      C:\Users\User\Desktop\Tools\Accesschk\accesschk64.exe -wuvc daclsvc
+  
+      ```
+  
+  2.  Identify the Vulnerability
+  
+      The output will show a list of permissions. The key finding is that your current user (e.g., User-PC\User) has the SERVICE_CHANGE_CONFIG permission. This allows us to modify critical service parameters, including the path to its executable.
+  
+  💥 Exploitation
+  ---------------
+  
+  Now we will reconfigure the service to execute a command of our choice instead of its intended program and then start it to trigger the exploit.
+  
+  1.  Modify the Service's Binary Path (binPath)
+  
+      In the command prompt, use the sc config command to change the binpath of the daclsvc service. We will set it to a command that adds our current user (user) to the local administrators group.
+  
+      
+  
+      ```ruby
+      sc config daclsvc binpath= "net localgroup administrators user /add"
+  
+      ```
+  
+      > **Note:** The space after `binpath=` is required. Windows will execute whatever is in the `binpath` string when the service starts.
+  
+  2.  Start the Service to Trigger the Exploit
+  
+      Now, start the service. The Service Control Manager will attempt to run the "binary" we specified, executing our command with LocalSystem privileges.
+  
+      
+  
+      ```ruby
+      sc start daclsvc
+  
+      ```
+  
+      You may see an error message stating the service did not respond in a timely fashion. This is expected, as our command runs and exits immediately, which is not the behavior of a normal service. The command will have already succeeded.
+  
+  ✅ Verification
+  --------------
+  
+  To confirm that the privilege escalation was successful, check the membership of the local administrators group.
+  
+  1.  Check Administrators Group
+  
+      In the same command prompt, type:
+  
+      
+  
+      ```RUBY
+      net localgroup administrators
+  
+      ```
+  
+      You will now see the `user` account listed as a member of the group, confirming a successful privilege escalation.
+  
+  
+
+
+
+
   </details>
 
 
