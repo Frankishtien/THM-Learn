@@ -666,6 +666,166 @@
 
 - <details>
       <summary> DLL Hijacking</summary>
+
+
+
+
+
+  
+  
+  Windows Privilege Escalation: DLL Hijacking
+  ===========================================
+  
+  This guide demonstrates a privilege escalation technique known as **DLL Hijacking**. This vulnerability occurs when a legitimate, high-privilege application attempts to load a Dynamic Link Library (DLL) from an insecure path. By placing a malicious DLL with the correct name in a user-writable directory that the application searches, an attacker can force the application to execute their code with elevated privileges.
+  
+  🕵️‍♂️ Detection
+  ----------------
+  
+  We will use Process Monitor (`Procmon`) to observe a service's behavior and find a hijackable DLL path.
+  
+  1.  Launch Process Monitor
+  
+      On the Windows VM, navigate to C:\Users\User\Desktop\Tools\Process Monitor and run Procmon.exe as an administrator.
+  
+  2.  Set Up the First Filter (Process Name)
+  
+      We need to filter the events to only show activity from our target service.
+  
+      -   Go to `Filter > Filter...` (or press `Ctrl+L`).
+  
+      -   Create a rule that reads: **`Process Name` `is` `dllhijackservice.exe` `then` `Include`**.
+  
+      -   Click **Add**, then **Apply**.
+  
+  <img width="969" height="612" alt="image" src="https://github.com/user-attachments/assets/6a8e2778-9178-4a24-bdc9-4e84deb5a858" />
+  
+  
+  
+  3.  Set Up the Second Filter (Result)
+  
+      Next, we only want to see attempts to load files that were not successful.
+  
+      -   Create a second rule that reads: **`Result` `is` `NAME NOT FOUND` `then` `Include`**.
+  
+      -   Click **Add**, then **Apply**, and **OK**.
+  
+  
+  <img width="842" height="466" alt="image" src="https://github.com/user-attachments/assets/05e1529a-34d6-42a2-a81c-5b7367207d7d" />
+  
+  
+  4.  Trigger the Service
+  
+      Open a command prompt and start the vulnerable service to generate events in Procmon.
+  
+      DOS
+  
+      ```
+      sc start dllsvc
+  
+      ```
+  
+  <img width="944" height="699" alt="image" src="https://github.com/user-attachments/assets/b15c6de7-6b51-4b83-af99-ff440e3aaf75" />
+  
+  
+  
+  5.  Analyze the Results
+  
+      Go back to the Process Monitor window. You will see several NAME NOT FOUND results. The key finding is an attempt to load a DLL from a user-writable directory.
+  
+      > The output will show that the service tried to load `hijackme.dll` from `C:\Temp`, but the operation failed because the file doesn't exist. Since `C:\Temp` is a writable location, this is our hijacking opportunity.
+  
+  💥 Exploitation
+  ---------------
+  
+  Now we will create a malicious DLL, place it in the vulnerable path, and restart the service to execute our code.
+  
+  ### 1\. Preparing the Malicious DLL (Kali VM)
+  
+  1.  Transfer the Source Code
+  
+      Copy the source file C:\Users\User\Desktop\Tools\Source\windows_dll.c from the Windows VM to your Kali machine.
+  
+  <img width="1208" height="476" alt="image" src="https://github.com/user-attachments/assets/9596730f-855b-4d47-aefd-b90baea6c6b3" />
+  
+  
+  
+  2.  Modify the Payload
+  
+      Open windows_dll.c on Kali. Modify the system() function to execute a command that adds your user (user) to the local administrators group.
+  
+      C
+  
+      ```
+      system("cmd.exe /k net localgroup administrators user /add");
+  
+      ```
+  
+  <img width="767" height="368" alt="image" src="https://github.com/user-attachments/assets/7a3372cf-2628-4177-bff2-a83f724591dc" />
+  
+      
+  
+  3.  Compile the Malicious DLL
+  
+      Save the file and use the mingw-w64 cross-compiler to create the DLL. The -shared flag is essential for compiling a DLL file.
+  
+      Bash
+  
+      ```
+      x86_64-w64-mingw32-gcc windows_dll.c -shared -o hijackme.dll
+  
+      ```
+  
+  <img width="686" height="228" alt="image" src="https://github.com/user-attachments/assets/e584f743-26c1-427f-9cbe-6cc0b30eb722" />
+  
+      
+  
+  4.  Transfer the DLL Back
+  
+      Copy the compiled hijackme.dll from your Kali VM to the C:\Temp directory on the Windows VM.
+  
+  <img width="950" height="218" alt="image" src="https://github.com/user-attachments/assets/1547550e-54a2-4f32-8e8c-25010fd84fdd" />
+  
+  
+  ### 2\. Planting and Triggering the DLL (Windows VM)
+  
+  1.  With `hijackme.dll` now in `C:\Temp`, the service will find and load it upon startup. Open a command prompt and restart the service to trigger the exploit.
+  
+      DOS
+  
+      ```
+      sc stop dllsvc & sc start dllsvc
+  
+      ```
+  
+  <img width="653" height="456" alt="image" src="https://github.com/user-attachments/assets/535a519a-942b-4897-8ef2-428f8600f7d9" />
+  
+  
+      When the service starts, it will load our malicious DLL and execute the embedded command with `SYSTEM` privileges.
+  
+  ✅ Verification
+  --------------
+  
+  To confirm the attack was successful, check the membership of the local administrators group.
+  
+  1.  Check Administrators Group
+  
+      In the command prompt, run:
+  
+      DOS
+  
+      ```
+      net localgroup administrators
+  
+      ```
+  
+      You should now see the `user` account listed as a member of the administrators group, confirming a successful privilege escalation.
+  
+  
+  
+
+
+
+
   </details>
 
 
